@@ -1,0 +1,57 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+\documentclass[12pt]{article}
+\usepackage[margin=1.in]{geometry}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{subfig}
+\usepackage{bbold}
+\usepackage{epstopdf}
+\usepackage[parfill]{parskip}
+
+\pagestyle{fancyplain}
+\pagenumbering{arabic}
+\fancyhf{}
+\rhead{{Jack Wang, Kevin Tang}}
+\chead{\thepage}
+\lhead{CS 155, Kaggle Project \#1}
+
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Sterling}[1]{\sqrt{2\pi#1}\left(\frac{#1}{e}\right)^{#1}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\renewcommand\thesubsection{\arabic{section}.\alph{subsection}}
+\renewcommand\thesubsubsection{\thesubsection\.\roman{subsubsection}}
+
+\newenvironment{lemma}[2][Lemma]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+\newenvironment{exercise}[2][Exercise]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+\newenvironment{problem}[2][Problem]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+\newenvironment{question}[2][Question]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+\newenvironment{corollary}[2][Corollary]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+
+\begin{document}
+
+% --------------------------------------------------------------
+% Start here
+% --------------------------------------------------------------
+
+\tableofcontents
+
+\section{Overview}
+\section{Data Manipulation}
+\section{Learning Algorithm}
+\section{Conclusion}
+
+\end{document}
