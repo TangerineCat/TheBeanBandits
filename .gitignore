@@ -246,3 +246,4 @@ Final report/*.pdf
 *.sublime-workspace
 beanbanditenv/
 *.sqlite3
+*.sublime-project
