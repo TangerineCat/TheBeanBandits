@@ -55,7 +55,7 @@ ROOT_URLCONF = 'beanbandits.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR + '/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -80,8 +80,8 @@ DATABASES = {
         'NAME': 'chinese',
         'USER': 'justin',
         'PASSWORD': 'mailman',
-	'HOST': 'localhost',
-        'PORT': '',
+        'HOST': 'avery.grotto.ro',
+        'PORT': '5432',
     }
 }
 
@@ -123,3 +123,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# Auth
+ACCOUNT_ACTIVATION_DAYS = 7
+
+REGISTRATION_OPEN = True
