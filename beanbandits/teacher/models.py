@@ -28,3 +28,20 @@ class UserResponse(models.Model):
     def create(cls, user_id_, is_correct_):
         user_response = cls(user_id = user_id_, is_correct = is_correct_)
         return user_response
+
+class WordSet(models.Model):
+    """
+    Description: List of model sets.
+    """
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+
+class ChineseChar(models.Model):
+    """
+    Description: One quiz set.
+    """
+    word = models.CharField(max_length=10)
+    definition = models.CharField(max_length=255)
+    pinyin = models.CharField(max_length=40)
+    rank = models.PositiveIntegerField()
+    wordset = models.ForeignKey(WordSet, on_delete=models.CASCADE)
