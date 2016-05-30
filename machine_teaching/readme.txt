@@ -1,4 +1,4 @@
-Author: Justin Leong
+Author: Justin Leong, Kevin Tang, Kaikai Sheng, and Zilong Chen
 Based on code by: Edward Johns (e.johns@imperial.ac.uk)
 Project Website: http://visual.cs.ucl.ac.uk/pubs/interactiveMachineTeaching/
 

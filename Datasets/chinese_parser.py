@@ -67,7 +67,7 @@ with open('dataset.csv','rb') as fin:
             font = ImageFont.truetype("simsun.ttc", 120)
             draw.text((0,0), unicode(line[0].encode("utf-8"),"UTF-8"), font=font)
             del draw
-            filename = "../machine_teaching/teacher/static/"
+            filename = "../beanbandits/teacher/static/"
             back = "teacher/images/chinese/" + str(rank) + "/" + line[2] + ".JPG"
             filename += back
             image_paths.append(back)
