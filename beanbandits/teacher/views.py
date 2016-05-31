@@ -40,12 +40,14 @@ num_classes = len(class_names)
 class_num_samples = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_num_images.npy')))
 class_num_samples = [int(i) for i in class_num_samples]
 # Create a list of indices where each class starts
-class_start = range(0,10)
+class_start = range(10)
 # Create the class ids of all samples
-sample_classes = range(0,9)
+sample_classes = range(10)
 print sample_classes
 # # Load the image paths
 image_paths = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/image_paths.npy')))
+characters = Word.objects.values_list('word', flat = True)
+pinyins = Word.objects.values_list('pinyin', flat = True)
 # # Replace class names with definitions
 # class_names = []
 # for image in image_paths:
@@ -58,15 +60,17 @@ def index(request):
     # Has a mode been assigned?
     if 'mode' in request.POST:
         mode = int(request.POST['mode'])
-        if mode == 0: # last mode was new user
+        if mode == 0:
             request.session.flush()
             createNewUser(request)
+            return selection(request)
+        elif mode == 1: # last mode was new user
             request.session['teaching_image_num'] = 0
             return teaching(request)
-        elif mode == 1: # last mode was teaching
+        elif mode == 2: # last mode was teaching
             processTeachingAnswer(request)
             return feedback(request)
-        elif mode == 2: # last mode was feedback
+        elif mode == 3: # last mode was feedback
             teaching_image_num_ = int(request.session['teaching_image_num'])
             if teaching_image_num_ == num_teaching_images:
                 request.session['testing_image_num'] = 1
@@ -74,10 +78,10 @@ def index(request):
                 return render(request, 'teacher/endteaching.html', context)
             else:
                 return teaching(request)
-        elif mode == 3: # last mode was endTeaching
+        elif mode == 4: # last mode was endTeaching
             request.session['testing_image_num'] = 0
             return testing(request)
-        elif mode == 4: # last mode was testing
+        elif mode == 5: # last mode was testing
             processTestingAnswer(request)
             testing_image_num_ = int(request.session['testing_image_num'])
             if testing_image_num_ == num_testing_images:
@@ -122,6 +126,17 @@ def createNewUser(request):
     request.session['testing_samples'] = testing_samples
 
 
+def selection(request):
+
+    num_classes = 1
+    class_names = WordSet.objects.values_list('name', flat=True)
+    context = {'num_classes': num_classes, 'class_names': class_names}
+    return render(request, 'teacher/selection.html')
+
+def selectionFeedback(request):
+    pass
+
+
 def teaching(request):
 
     user_id_ = request.session['user_id']
@@ -140,7 +155,7 @@ def teaching(request):
     image_path = image_paths[next_sample]
     teaching_class_id = sample_classes[next_sample]
 
-    context = {'teaching_image_num': teaching_image_num, 'num_teaching_images': num_teaching_images, 'image_path': image_path, 'class_names': class_names}
+    context = {'teaching_image_num': teaching_image_num, 'num_teaching_images': num_teaching_images, 'image_path': image_path, 'class_names': class_names, 'character': characters[next_sample]}
 
     request.session['teaching_class_id'] = teaching_class_id
     request.session['teaching_image_id'] = next_sample
