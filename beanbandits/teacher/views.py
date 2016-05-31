@@ -44,9 +44,7 @@ class_num_samples = [int(i) for i in class_num_samples]
 class_start = range(10)
 # Create the class ids of all samples
 sample_classes = range(10)
-print sample_classes
 # # Load the image paths
-image_paths = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/image_paths.npy')))
 characters = Word.objects.values_list('word', flat = True)
 pinyins = Word.objects.values_list('pinyin', flat = True)
 # # Replace class names with definitions
@@ -146,7 +144,6 @@ def processSelection(request):
     # Create the class ids of all samples
     sample_classes = range(10)
     # # Load the image paths
-    image_paths = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/image_paths.npy')))
     characters = Word.objects.filter(wordset=answer_).values_list('word', flat = True)
     pinyins = Word.objects.filter(wordset=answer_).values_list('pinyin', flat = True)
 
@@ -168,15 +165,15 @@ def teaching(request):
     L = request.session['L']
     #next_sample = int(eer.get_next_sample(X, Y, W, L, testing_samples_))
     next_sample = random.randint(0,9)
-    image_path = image_paths[next_sample]
     teaching_class_id = sample_classes[next_sample]
+    character = characters[next_sample]
 
-    context = {'teaching_image_num': teaching_image_num, 'num_teaching_images': num_teaching_images, 'image_path': image_path, 'class_names': class_names, 'character': characters[next_sample]}
+    context = {'teaching_image_num': teaching_image_num, 'num_teaching_images': num_teaching_images, 'class_names': class_names, 'character': character}
 
     request.session['teaching_class_id'] = teaching_class_id
     request.session['teaching_image_id'] = next_sample
     request.session['teaching_image_num'] = teaching_image_num
-    request.session['image_path'] = image_path
+    request.session['character'] = character
 
     return render(request, 'teacher/teaching.html', context)
 
@@ -186,7 +183,7 @@ def feedback(request):
     answer_ = int(request.POST['answer'])
     teaching_image_num_ = int(request.session['teaching_image_num'])
     teaching_class_id_ = int(request.session['teaching_class_id'])
-    image_path_ = request.session['image_path']
+    character = request.session['character']
 
     true_class_name = class_names[teaching_class_id_]
     answer_class_name = class_names[answer_]
@@ -195,7 +192,7 @@ def feedback(request):
     else:
         is_correct = False
 
-    context = {'class_names': class_names, 'teaching_image_num': teaching_image_num_, 'image_path': image_path_, 'true_class_name': true_class_name, 'answer_class_name': answer_class_name, 'is_correct': is_correct}
+    context = {'class_names': class_names, 'teaching_image_num': teaching_image_num_, 'true_class_name': true_class_name, 'answer_class_name': answer_class_name, 'is_correct': is_correct, 'character': character}
 
     return render(request, 'teacher/feedback.html', context)
 
@@ -208,14 +205,15 @@ def testing(request):
     testing_image_num = testing_image_num_ + 1
 
     testing_image_id = testing_samples_[testing_image_num - 1]
-    image_path = image_paths[testing_image_id]
     testing_class_id = sample_classes[testing_image_id]
+    character = characters[testing_image_id]
 
     request.session['testing_image_num'] = testing_image_num
     request.session['testing_image_id'] = testing_image_id
     request.session['testing_class_id'] = testing_class_id
+    request.session['character'] = character
 
-    context = {'testing_image_num': testing_image_num, 'num_testing_images': num_testing_images, 'image_path': image_path, 'class_names': class_names}
+    context = {'testing_image_num': testing_image_num, 'num_testing_images': num_testing_images, 'class_names': class_names, 'character': character}
 
     return render(request, 'teacher/testing.html', context)
 
