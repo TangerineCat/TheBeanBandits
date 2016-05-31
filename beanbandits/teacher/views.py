@@ -32,6 +32,7 @@ num_testing_images = 1
 
 
 
+word_sets = WordSet.objects.values_list('name', flat=True)
 # Load the class names
 # class_names = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_names.npy')))
 class_names = Word.objects.values_list('definition', flat = True)
@@ -65,6 +66,7 @@ def index(request):
             createNewUser(request)
             return selection(request)
         elif mode == 1: # last mode was new user
+            processSelection(request)
             request.session['teaching_image_num'] = 0
             return teaching(request)
         elif mode == 2: # last mode was teaching
@@ -129,12 +131,26 @@ def createNewUser(request):
 def selection(request):
 
     num_classes = 1
-    class_names = WordSet.objects.values_list('name', flat=True)
-    context = {'num_classes': num_classes, 'class_names': class_names}
-    return render(request, 'teacher/selection.html')
+    context = {'num_classes': num_classes, 'class_names': word_sets}
+    return render(request, 'teacher/selection.html', context)
 
-def selectionFeedback(request):
-    pass
+def processSelection(request):
+    answer_ = int(request.POST['answer'])
+    class_names = Word.objects.filter(wordset=answer_).values_list('definition', flat = True)
+    num_classes = len(class_names)
+    # Load the number of samples (images) per class
+    class_num_samples = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_num_images.npy')))
+    class_num_samples = [int(i) for i in class_num_samples]
+    # Create a list of indices where each class starts
+    class_start = range(10)
+    # Create the class ids of all samples
+    sample_classes = range(10)
+    # # Load the image paths
+    image_paths = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/image_paths.npy')))
+    characters = Word.objects.filter(wordset=answer_).values_list('word', flat = True)
+    pinyins = Word.objects.filter(wordset=answer_).values_list('pinyin', flat = True)
+
+
 
 
 def teaching(request):
