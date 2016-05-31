@@ -10,6 +10,7 @@
 # Import some Django modules
 from django.shortcuts import render
 from django.shortcuts import redirect
+from django.core.management.base import BaseCommand
 
 # Import some standard Python modules
 import os
@@ -20,7 +21,7 @@ import random
 import eer
 
 # Import the User and UserResponse models (which are stored in the SQL database)
-from teacher.models import User, UserResponse
+from teacher.models import User, UserResponse, Word, WordSet
 
 
 # Set the name of the dataset
@@ -33,16 +34,18 @@ num_testing_images = 1
 
 # Load the class names
 # class_names = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_names.npy')))
-# num_classes = len(class_names)
-# # Load the number of samples (images) per class
-# class_num_samples = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_num_images.npy')))
-# class_num_samples = [int(i) for i in class_num_samples]
-# # Create a list of indices where each class starts
-# class_start = [sum(class_num_samples[:n]) for n in range(len(class_num_samples))]
-# # Create the class ids of all samples
-# sample_classes = [i for (i,k) in enumerate(class_num_samples) for j in range(k)]
+class_names = Word.objects.values_list('definition', flat = True)
+num_classes = len(class_names)
+# Load the number of samples (images) per class
+class_num_samples = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_num_images.npy')))
+class_num_samples = [int(i) for i in class_num_samples]
+# Create a list of indices where each class starts
+class_start = range(0,10)
+# Create the class ids of all samples
+sample_classes = range(0,9)
+print sample_classes
 # # Load the image paths
-# image_paths = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/image_paths.npy')))
+image_paths = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/image_paths.npy')))
 # # Replace class names with definitions
 # class_names = []
 # for image in image_paths:
@@ -68,7 +71,7 @@ def index(request):
             if teaching_image_num_ == num_teaching_images:
                 request.session['testing_image_num'] = 1
                 context = {'num_testing_images': num_testing_images}
-                return render(request, 'teacher/endTeaching.html', context)
+                return render(request, 'teacher/endteaching.html', context)
             else:
                 return teaching(request)
         elif mode == 3: # last mode was endTeaching
@@ -108,7 +111,7 @@ def createNewUser(request):
     for i in range(num_classes):
         for j in range(class_num_testing_samples):
             while True:
-                sample = random.randint(class_start[i], class_start[i] + class_num_samples[i] - 1)
+                sample = random.randint(class_start[i], class_start[i])
                 if sample not in testing_samples:
                     testing_samples.append(sample)
                     break
@@ -133,7 +136,7 @@ def teaching(request):
     X = numpy.load(X_path)
     L = request.session['L']
     #next_sample = int(eer.get_next_sample(X, Y, W, L, testing_samples_))
-    next_sample = random.randint(0,992)
+    next_sample = random.randint(0,9)
     image_path = image_paths[next_sample]
     teaching_class_id = sample_classes[next_sample]
 
