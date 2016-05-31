@@ -3,6 +3,7 @@ from django.db import models
 import datetime
 import ast
 
+
 class User(models.Model):
 
     # Member variables for User
@@ -13,7 +14,7 @@ class User(models.Model):
     # Function to construct a User
     @classmethod
     def create(cls, user_id_):
-        user = cls(user_id = user_id_)
+        user = cls(user_id=user_id_)
         return user
 
 
@@ -26,8 +27,9 @@ class UserResponse(models.Model):
     # Function to construct a UserResponse
     @classmethod
     def create(cls, user_id_, is_correct_):
-        user_response = cls(user_id = user_id_, is_correct = is_correct_)
+        user_response = cls(user_id=user_id_, is_correct=is_correct_)
         return user_response
+
 
 class WordSet(models.Model):
     """
@@ -36,7 +38,8 @@ class WordSet(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
 
-class ChineseChar(models.Model):
+
+class Word(models.Model):
     """
     Description: One quiz set.
     """
@@ -45,3 +48,23 @@ class ChineseChar(models.Model):
     pinyin = models.CharField(max_length=40)
     rank = models.PositiveIntegerField()
     wordset = models.ForeignKey(WordSet, on_delete=models.CASCADE)
+
+
+class Modes(models.Model):
+    RANDOM = 0
+    LEASTUSED = 1
+    BEANBANDIT = 2
+    MODE_CHOICES = (
+        (RANDOM, "Random"),
+        (LEASTUSED, "Least used"),
+        (BEANBANDIT, "Bean Bandit"),
+    )
+    mode = models.PositiveIntegerField(primary_key=True, choices=MODE_CHOICES)
+
+
+class Exercise(models.Model):
+    """
+    Description: Model Description
+    """
+    wordset = models.ForeignKey(WordSet)
+    mode = models.ForeignKey(Modes)

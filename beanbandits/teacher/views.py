@@ -32,21 +32,21 @@ num_testing_images = 1
 
 
 # Load the class names
-class_names = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_names.npy')))
-num_classes = len(class_names)
-# Load the number of samples (images) per class
-class_num_samples = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_num_images.npy')))
-class_num_samples = [int(i) for i in class_num_samples]
-# Create a list of indices where each class starts
-class_start = [sum(class_num_samples[:n]) for n in range(len(class_num_samples))]
-# Create the class ids of all samples
-sample_classes = [i for (i,k) in enumerate(class_num_samples) for j in range(k)]
-# Load the image paths
-image_paths = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/image_paths.npy')))
-# Replace class names with definitions
-class_names = []
-for image in image_paths:
-    class_names.append(image.split("/")[4][:-4])
+# class_names = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_names.npy')))
+# num_classes = len(class_names)
+# # Load the number of samples (images) per class
+# class_num_samples = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_num_images.npy')))
+# class_num_samples = [int(i) for i in class_num_samples]
+# # Create a list of indices where each class starts
+# class_start = [sum(class_num_samples[:n]) for n in range(len(class_num_samples))]
+# # Create the class ids of all samples
+# sample_classes = [i for (i,k) in enumerate(class_num_samples) for j in range(k)]
+# # Load the image paths
+# image_paths = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/image_paths.npy')))
+# # Replace class names with definitions
+# class_names = []
+# for image in image_paths:
+#     class_names.append(image.split("/")[4][:-4])
 
 
 

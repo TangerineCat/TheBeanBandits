@@ -1,7 +1,10 @@
 from __future__ import unicode_literals
 
+# Models the Student
+
 from django.db import models
 from django.contrib.auth.models import User
+
 # Create your models here.
 
 # Proficiency
@@ -39,7 +42,6 @@ class Student(models.Model):
     proficiency = models.PositiveSmallIntegerField(choices=PROFICIENCY_CHOICES)
 
 
-# class StudentHistory(models.Model):
-#     student = models.ForeignKey(Student)
-#     time = models.DateTimeField(auto_now_add=True)
-#     exercise = models.ForeignKey
+class StudentHistory(models.Model):
+    student = models.ForeignKey(Student)
+    time = models.DateTimeField(auto_now_add=True)
