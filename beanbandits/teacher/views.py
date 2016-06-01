@@ -43,6 +43,7 @@ TESTING = 4
 ENDTEST = 5
 
 
+@login_required()
 class WordSetListView(ListView):
     model = WordSet
     template_name = "selection.html"
@@ -53,17 +54,122 @@ class WordSetListView(ListView):
     def get_context_data(self, **kwargs):
         context = super(WordSetListView, self).get_context_data(**kwargs)
         self.request.session['n'] = 0
+        # TODO: randomly choose one algorithm to test user.
         return context
 
 
 @login_required()
 def quiz(request, pk):
+    #TODO: (jleong) add in logic for when it's time to test instead
     request.session['wordset_id'] = pk
     if request.method == 'POST':
-        return feedback(request)
+        return feedback(request, pk)
     else:  # get request
-        return teaching(request)
+        return teaching(request, pk)
 
+
+def getNext(n):
+    return random.randint(0, n - 1)
+
+
+def teaching(request, pk):
+    """
+    Shows a teaching example with options
+    """
+    wordsetid = request.session['wordset_id']
+    wordset = WordSet.objects.filter(pk=wordsetid).get()
+    wordlist = Word.objects.filter(wordset=wordset)
+    next_sample = getNext(len(wordlist))
+    next_word = wordlist[next_sample]
+
+    context = {'next_word': next_word,
+               'wordlist': wordlist,
+               }
+    request.session['next_sample'] = next_sample
+    request.session['word_id'] = next_word.id
+    n = request.session['n']
+    request.session['n'] = n + 1
+
+    return render(request, 'teacher/teaching.html', context)
+
+
+def feedback(request, pk):
+    answer_ = int(request.POST['answer'])
+    next_sample = int(request.session['next_sample'])
+    word_id = int(request.session['word_id'])
+    word = Word.objects.filter(pk=word_id).get()
+
+    is_correct = answer_ == next_sample
+
+    context = {'word': word,
+               'is_correct': is_correct,
+               'wordset': pk}
+
+    return render(request, 'teacher/feedback.html', context)
+
+
+def testing(request):
+    # TODO (jleong) implement testing procedure and template
+    # at the end of testing,
+    testing_image_num_ = request.session['testing_image_num']
+    testing_samples_ = request.session['testing_samples']
+
+    testing_image_num = testing_image_num_ + 1
+
+    testing_image_id = testing_samples_[testing_image_num - 1]
+    testing_class_id = sample_classes[testing_image_id]
+    character = characters[testing_image_id]
+
+    request.session['testing_image_num'] = testing_image_num
+    request.session['testing_image_id'] = testing_image_id
+    request.session['testing_class_id'] = testing_class_id
+    request.session['character'] = character
+
+    context = {'testing_image_num': testing_image_num,
+               'num_testing_images': num_testing_images,
+               'class_names': class_names,
+               'character': character}
+
+    return render(request, 'teacher/testing.html', context)
+
+def testResults(request):
+    # TODO: Implement this view.
+    # Should show statistics of the quiz
+    # Should have a link to try other quizes
+
+    # Get the average score
+    score_sum = 0
+    finished_users = User.objects.filter(is_finished=True)
+    for u in finished_users:
+        finished_correct_responses = UserResponse.objects.filter(
+            user_id=u.user_id).filter(is_correct=True)
+        score_sum += len(finished_correct_responses)
+
+    user_id_ = request.session['user_id']
+
+    correct_responses = UserResponse.objects.filter(
+        user_id=user_id_).filter(is_correct=True)
+    score = len(correct_responses)
+
+    user = User.objects.get(user_id=user_id_)
+    user.score = score
+    user.is_finished = True
+    user.save()
+
+    if len(finished_users) > 0:
+        ave_score = float(score_sum) / len(finished_users)
+    else:
+        ave_score = score
+
+    context = {'score': score,
+               'num_testing_images': num_testing_images,
+               'ave_score': ave_score}
+
+    return render(request, 'teacher/testresults.html', context)
+
+
+
+##### DEPRECATED #########
 
 def index(request):
     # Has a mode been assigned?
@@ -113,75 +219,6 @@ def processSelection(request):
     request.session['characters'] = characters
 
 
-def getNext(n):
-    return random.randint(0, n - 1)
-
-
-def teaching(request):
-    """
-    Shows a teaching example with options
-    """
-    wordsetid = request.session['wordset_id']
-    wordset = WordSet.objects.filter(pk=wordsetid).get()
-    wordlist = Word.objects.filter(wordset=wordset)
-    next_sample = getNext(len(wordlist))
-    next_word = wordlist[next_sample]
-
-    context = {'next_word': next_word,
-               'wordlist': wordlist,
-               }
-
-    request.session['n'] += 1
-
-    return render(request, 'teacher/teaching.html', context)
-
-
-def feedback(request):
-
-    answer_ = int(request.POST['answer'])
-    teaching_image_num_ = int(request.session['teaching_image_num'])
-    teaching_class_id_ = int(request.session['teaching_class_id'])
-    character = request.session['character']
-
-    true_class_name = class_names[teaching_class_id_]
-    answer_class_name = class_names[answer_]
-    if answer_ == teaching_class_id_:
-        is_correct = True
-    else:
-        is_correct = False
-
-    context = {'class_names': class_names,
-               'teaching_image_num': teaching_image_num_,
-               'true_class_name': true_class_name,
-               'answer_class_name': answer_class_name,
-               'is_correct': is_correct, 'character': character}
-
-    return render(request, 'teacher/feedback.html', context)
-
-
-def testing(request):
-
-    testing_image_num_ = request.session['testing_image_num']
-    testing_samples_ = request.session['testing_samples']
-
-    testing_image_num = testing_image_num_ + 1
-
-    testing_image_id = testing_samples_[testing_image_num - 1]
-    testing_class_id = sample_classes[testing_image_id]
-    character = characters[testing_image_id]
-
-    request.session['testing_image_num'] = testing_image_num
-    request.session['testing_image_id'] = testing_image_id
-    request.session['testing_class_id'] = testing_class_id
-    request.session['character'] = character
-
-    context = {'testing_image_num': testing_image_num,
-               'num_testing_images': num_testing_images,
-               'class_names': class_names,
-               'character': character}
-
-    return render(request, 'teacher/testing.html', context)
-
 
 def processTeachingAnswer(request):
 
@@ -213,34 +250,3 @@ def processTestingAnswer(request):
     user_response.save()
 
 
-def testResults(request):
-
-    # Get the average score
-    score_sum = 0
-    finished_users = User.objects.filter(is_finished=True)
-    for u in finished_users:
-        finished_correct_responses = UserResponse.objects.filter(
-            user_id=u.user_id).filter(is_correct=True)
-        score_sum += len(finished_correct_responses)
-
-    user_id_ = request.session['user_id']
-
-    correct_responses = UserResponse.objects.filter(
-        user_id=user_id_).filter(is_correct=True)
-    score = len(correct_responses)
-
-    user = User.objects.get(user_id=user_id_)
-    user.score = score
-    user.is_finished = True
-    user.save()
-
-    if len(finished_users) > 0:
-        ave_score = float(score_sum) / len(finished_users)
-    else:
-        ave_score = score
-
-    context = {'score': score,
-               'num_testing_images': num_testing_images,
-               'ave_score': ave_score}
-
-    return render(request, 'teacher/testresults.html', context)

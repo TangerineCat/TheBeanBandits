@@ -7,10 +7,8 @@ body {
   background-color: #fff;
 }
 .container {
-  padding: 10px 0px;
-  float: left;
-  width: 100%;
-  background: #f1f1f1;
+  width: 1080px;
+  margin: 0 auto;
 }
 
 /* Pen Title */
@@ -163,23 +161,44 @@ body {
   color: #888;
 }
 .container h3 {
-  
+
 }
-.selection-section {
+
+.selection {
+  padding: 80px 0px;
+  float: left;
+  width: 100%;
+  background: #f1f1f1;
+}
+
+.selection-section ul li a {
   text-decoration: none;
 }
+
+.selection-section ul li {
+  width: 318px;
+  margin: 40px 20px 0px;
+  border-radius: 5px;
+  background-color: #fff;
+  float: left;
+  transition: all 0.3s ease-in;
+  -moz-transition: all 0.3s ease-in;
+  -o-transition: all 0.3s ease-in;
+  -ms-transition: all 0.3s ease-in;
+  -webkit-transition: all 0.3s ease-in;
+}
 .selection-box {
-  border: 1 px solid #ccc;
-  border-bottom-left-radius: 5 px;
-  border-bottom-right-radius: 5 px;
+  border: 1px solid #ccc;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
   border-top: none;
   text-align: center;
-  padding: 10 px 0px 20 px;
+  padding: 10px 0px 20px;
 }
 .selection-box h4 {
   color: #4E4F4F;
-  font-size: 16 px;
+  font-size: 16px;
   font-family: 'Raleway', sans-serif;
   font-weight: 600;
-  line-height: 50 px;
+  line-height: 50px;
 }

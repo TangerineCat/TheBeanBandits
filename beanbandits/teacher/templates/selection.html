@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block title %}Class selection{% endblock %}
 {% block main_content %}
-  <div class="frame">
+  <div class="selection">
     <div class="container">
       <h3 style="font-weight:normal">Please choose a class of Chinese characters that you do not already know.</h3>
       <div class="selection-section">
@@ -11,7 +11,7 @@
             <li><a href="{% url "teacher:quiz" wordset.id %}">
               <div class="selection-box">
                 <h4>{{ wordset.name }}</h4>
-                <!--<p>{{ wordset.description|linebreaks }}</p>-->
+                <p>{{ wordset.description|linebreaks }}</p>
               </div>
             </a></li>
             {% empty %}
