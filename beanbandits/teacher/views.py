@@ -8,7 +8,7 @@
 
 
 # Import some Django modules
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.management.base import BaseCommand
 from django.contrib.auth.decorators import login_required
 
@@ -53,13 +53,13 @@ class WordSetListView(ListView):
     def get_context_data(self, **kwargs):
         self.request.session.flush()
         context = super(WordSetListView, self).get_context_data(**kwargs)
-        self.request.session['wordidlist'] = \
-            self.queryset.values_list('id', flat=True)
+        self.request.session['n'] = 0
         return context
 
 
 @login_required()
 def quiz(request, pk):
+    request.session['wordset_id'] = pk
     if request.method == 'POST':
         return feedback(request)
     else:  # get request
@@ -122,20 +122,18 @@ def teaching(request):
     """
     Shows a teaching example with options
     """
-    #next_sample = int(eer.get_next_sample(X, Y, W, L, testing_samples_))
-    wordlist = request.session['wordlist']
+    wordsetid = request.session['worsetid']
+    wordset = WordSet.objects.filter(pk=wordsetid).get_object_or_404()
+    wordlist = Word.objects.filter(wordset=wordset)
     next_sample = getNext(len(wordlist))
-    word_id = wordlist[next_sample]
+    next_word = wordlist[next_sample]
 
-    context = {'teaching_image_num': teaching_image_num,
-               'num_teaching_images': num_teaching_images,
-               'class_names': class_names,
-               'character': character}
+    context = {'word': next_word,
+               'wordlist': wordlist,
+               }
 
-    request.session['teaching_class_id'] = teaching_class_id
-    request.session['teaching_image_id'] = next_sample
-    request.session['teaching_image_num'] = teaching_image_num
-    request.session['character'] = character
+    request.session['n'] += 1
+
 
     return render(request, 'teacher/teaching.html', context)
 
