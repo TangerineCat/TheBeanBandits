@@ -23,7 +23,7 @@ import random
 import eer
 
 # Import the User and UserResponse models (which are stored in the SQL database)
-from teacher.models import User, UserResponse, Word, WordSet
+from teacher.models import Word, WordSet
 
 
 # Set the name of the dataset
@@ -51,7 +51,6 @@ class WordSetListView(ListView):
         return WordSet.objects.all()
 
     def get_context_data(self, **kwargs):
-        self.request.session.flush()
         context = super(WordSetListView, self).get_context_data(**kwargs)
         self.request.session['n'] = 0
         return context
@@ -122,18 +121,17 @@ def teaching(request):
     """
     Shows a teaching example with options
     """
-    wordsetid = request.session['worsetid']
-    wordset = WordSet.objects.filter(pk=wordsetid).get_object_or_404()
+    wordsetid = request.session['wordset_id']
+    wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
     next_sample = getNext(len(wordlist))
     next_word = wordlist[next_sample]
 
-    context = {'word': next_word,
+    context = {'next_word': next_word,
                'wordlist': wordlist,
                }
 
     request.session['n'] += 1
-
 
     return render(request, 'teacher/teaching.html', context)
 
