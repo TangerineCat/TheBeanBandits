@@ -32,45 +32,30 @@ num_testing_images = 1
 
 
 
-word_sets = WordSet.objects.values_list('name', flat=True)
-# Load the class names
-# class_names = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_names.npy')))
-class_names = Word.objects.values_list('definition', flat = True)
-num_classes = len(class_names)
-# Load the number of samples (images) per class
-class_num_samples = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_num_images.npy')))
-class_num_samples = [int(i) for i in class_num_samples]
-# Create a list of indices where each class starts
-class_start = range(10)
-# Create the class ids of all samples
-sample_classes = range(10)
-# # Load the image paths
-characters = Word.objects.values_list('word', flat = True)
-pinyins = Word.objects.values_list('pinyin', flat = True)
-# # Replace class names with definitions
-# class_names = []
-# for image in image_paths:
-#     class_names.append(image.split("/")[4][:-4])
+num_classes = 10 
 
-
+START = 0
+TEACH = 1
+RESPONSE = 2
+ENDTEACH = 3
+TESTING = 4
+ENDTEST = 5
 
 def index(request):
-
     # Has a mode been assigned?
     if 'mode' in request.POST:
         mode = int(request.POST['mode'])
-        if mode == 0:
+        if mode == START:
             request.session.flush()
-            createNewUser(request)
             return selection(request)
-        elif mode == 1: # last mode was new user
+        elif mode == TEACH: # last mode was new user
             processSelection(request)
             request.session['teaching_image_num'] = 0
             return teaching(request)
-        elif mode == 2: # last mode was teaching
+        elif mode == RESPONSE: # last mode was teaching
             processTeachingAnswer(request)
             return feedback(request)
-        elif mode == 3: # last mode was feedback
+        elif mode == ENDTEACH: # last mode was feedback
             teaching_image_num_ = int(request.session['teaching_image_num'])
             if teaching_image_num_ == num_teaching_images:
                 request.session['testing_image_num'] = 1
@@ -78,10 +63,10 @@ def index(request):
                 return render(request, 'teacher/endteaching.html', context)
             else:
                 return teaching(request)
-        elif mode == 4: # last mode was endTeaching
+        elif mode == TESTING: # last mode was endTeaching
             request.session['testing_image_num'] = 0
             return testing(request)
-        elif mode == 5: # last mode was testing
+        elif mode == ENDTEST: # last mode was testing
             processTestingAnswer(request)
             testing_image_num_ = int(request.session['testing_image_num'])
             if testing_image_num_ == num_testing_images:
@@ -92,76 +77,31 @@ def index(request):
         return render(request, 'teacher/newuser.html')
 
 
-def createNewUser(request):
-
-    # Create new user
-    num_users = User.objects.count()
-    user_id = num_users
-    new_user = User.create(user_id)
-    new_user.save()
-
-    # Create X as an empty belief state (X is the machine's model of the student's distribution)
-    X = numpy.zeros([len(sample_classes), num_classes])
-    # Save X
-    X_path = os.path.join('../User-Data/X_' + str(user_id) + '.npy')
-    numpy.save(X_path, X)
-    # Set L as an unlabelled set
-    L = []
-    request.session['L'] = L
-
-    # Make the set of random testing samples (different for each user)
-    testing_samples = []
-    class_num_testing_samples = max(1, num_testing_images / num_classes)
-    for i in range(num_classes):
-        for j in range(class_num_testing_samples):
-            while True:
-                sample = random.randint(class_start[i], class_start[i])
-                if sample not in testing_samples:
-                    testing_samples.append(sample)
-                    break
-    random.shuffle(testing_samples)
-
-    # Set up the session
-    request.session['user_id'] = user_id
-    request.session['testing_samples'] = testing_samples
-
 
 def selection(request):
-
-    num_classes = 1
-    context = {'num_classes': num_classes, 'class_names': word_sets}
+    context = {'class_names': WordSet.objects.all()}
     return render(request, 'teacher/selection.html', context)
 
 def processSelection(request):
     answer_ = int(request.POST['answer'])
-    class_names = Word.objects.filter(wordset=answer_).values_list('definition', flat = True)
-    num_classes = len(class_names)
-    # Load the number of samples (images) per class
-    class_num_samples = list(numpy.load(os.path.join('../Datasets/' + dataset_name + '/class_num_images.npy')))
-    class_num_samples = [int(i) for i in class_num_samples]
-    # Create a list of indices where each class starts
-    class_start = range(10)
-    # Create the class ids of all samples
-    sample_classes = range(10)
     # # Load the image paths
-    characters = Word.objects.filter(wordset=answer_).values_list('word', flat = True)
-    pinyins = Word.objects.filter(wordset=answer_).values_list('pinyin', flat = True)
-
-
+    characters = Word.objects.filter(wordset=answer_).all()
+    # Make the set of testing samples (different for each user)
+    request.session['characters'] = characters
 
 
 def teaching(request):
-
-    user_id_ = request.session['user_id']
+    """
+    Shows a teaching example with options
+    """
+    user_id_ = request.user
     teaching_image_num_ = request.session['teaching_image_num']
     testing_samples_ = request.session['testing_samples']
 
     teaching_image_num = teaching_image_num_ + 1
 
-    W = numpy.load(os.path.join('../Datasets/' + dataset_name + '/weight_matrix.npy'))
-    Y = numpy.load(os.path.join('../Datasets/' + dataset_name + '/ground_truth.npy'))
-    X_path = '../User-Data/X_' + str(user_id_) + '.npy'
-    X = numpy.load(X_path)
+    #X_path = '../User-Data/X_' + str(user_id_) + '.npy'
+    #X = numpy.load(X_path)
     L = request.session['L']
     #next_sample = int(eer.get_next_sample(X, Y, W, L, testing_samples_))
     next_sample = random.randint(0,9)
