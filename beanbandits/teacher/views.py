@@ -11,6 +11,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.management.base import BaseCommand
 from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 
 from django.views.generic.list import ListView
 
@@ -43,10 +44,13 @@ TESTING = 4
 ENDTEST = 5
 
 
-@login_required()
 class WordSetListView(ListView):
     model = WordSet
     template_name = "selection.html"
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(WordSetListView, self).dispatch(*args, **kwargs)
 
     def get_queryset(self):
         return WordSet.objects.all()
