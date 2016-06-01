@@ -1,0 +1,35 @@
+{% load staticfiles %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>{% block title %}Portal Gun{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static "style.css" %}"/>
+  </head>
+
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logo-menu">
+          <div class="pen-title">
+            <h1><a href="#">The Bean Bandits</a></h1>
+          </div>
+          <!--<a id="simple-menu" href="#sidr">Toggle menu</a>-->
+          <div class="menu">
+            <ul>
+              <li><a href="#">Sets</a></li>
+              <li><a href="#">My Progress</a></li>
+              <li><a href="/accounts/logout/">Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% block main_content %}{% endblock %}
+    {% if content %}
+      <div class="desc">
+      </div>
+    {% endif %}
+
+  </body>
+</html>
