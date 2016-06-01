@@ -7,8 +7,10 @@ body {
   background-color: #fff;
 }
 .container {
-  width 1080 px;
-  margin 0 auto;
+  padding: 10px 0px;
+  float: left;
+  width: 100%;
+  background: #f1f1f1;
 }
 
 /* Pen Title */
@@ -160,6 +162,9 @@ body {
 .frame {
   color: #888;
 }
+.container h3 {
+  
+}
 .selection-section {
   text-decoration: none;
 }
@@ -169,7 +174,7 @@ body {
   border-bottom-right-radius: 5 px;
   border-top: none;
   text-align: center;
-  padding: 10 px 0px 20 px
+  padding: 10 px 0px 20 px;
 }
 .selection-box h4 {
   color: #4E4F4F;
