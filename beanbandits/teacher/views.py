@@ -25,8 +25,9 @@ from datetime import datetime
 import eer
 
 # Import the User and UserResponse models (which are stored in the SQL database)
-from teacher.models import Word, WordSet, Trial, Modes
+from teacher.models import Word, WordSet, Trial, Modes, Question
 from django.contrib.auth.models import User
+from django.db.models import Max
 
 
 # Define the teaching and testing lengths
@@ -81,10 +82,14 @@ def quiz(request, pk):
         else:  # get request
             return teaching(request, pk)
     elif num_shown - num_teaching_images < num_testing_images:
-        num_shown += 1
-        return testing(request, pk)
-    else:
-        return testResults(request)
+        if request.method == 'POST':
+            num_shown += 1
+            processTestingAnswer(request, pk)
+        if num_shown - num_teaching_images < num_testing_images:
+            return testing(request, pk)
+        else:
+            num_shown = 0
+            return testResults(request)
         
 
 
@@ -109,6 +114,7 @@ def teaching(request, pk):
     request.session['word_id'] = next_word.id
     n = request.session['n']
     request.session['n'] = n + 1
+    
 
     return render(request, 'teacher/teaching.html', context)
 
@@ -118,8 +124,15 @@ def feedback(request, pk):
     next_sample = int(request.session['next_sample'])
     word_id = int(request.session['word_id'])
     word = Word.objects.filter(pk=word_id).get()
+    wordsetid = request.session['wordset_id']
+    wordset = WordSet.objects.filter(pk=wordsetid).get()
+    wordlist = Word.objects.filter(wordset=wordset)
 
     is_correct = answer_ == next_sample
+    curr_trial = Trial.objects.filter(user = request.user).filter(wordset=wordset).latest('time_started')
+    new_question = Question(trial=curr_trial, question_num = num_shown, correct_word=word, correct = is_correct)
+    new_question.save()
+
 
     context = {'word': word,
                'is_correct': is_correct,
@@ -151,24 +164,21 @@ def testing(request, pk):
 def testResults(request):
     # Should show statistics of the quiz
     # Should have a link to try other quizes
-    
     # Get the average score
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     score_sum = 0
-    score = 0
+    curr_trial = Trial.objects.filter(user=request.user).filter(wordset=wordset).filter(time_finished=None).latest('time_started')
+    score = len(Question.objects.filter(trial=curr_trial).filter(correct=True))
     time_finished = datetime.now()
-    curr_trial = Trial.objects.filter(user = request.user).filter(wordset=wordset).filter(time_finished=None)
     curr_trial.time_finished = time_finished
     finished_trials = Trial.objects.filter(time_finished=None)
     for trial in finished_trials:
         score_sum += trial.score
 
-
     user = request.user
     user.score = score
     user.is_finished = True
-    new_trial.save()
 
     if len(finished_trials) > 0:
         ave_score = float(score_sum) / len(finished_trials)
@@ -180,6 +190,23 @@ def testResults(request):
                'ave_score': ave_score}
 
     return render(request, 'teacher/testresults.html', context)
+
+def processTestingAnswer(request, pk):
+
+    answer_ = int(request.POST['answer'])
+    next_sample = int(request.session['next_sample'])
+    word_id = int(request.session['word_id'])
+    word = Word.objects.filter(pk=word_id).get()
+    wordsetid = request.session['wordset_id']
+    wordset = WordSet.objects.filter(pk=wordsetid).get()
+    wordlist = Word.objects.filter(wordset=wordset)
+
+    is_correct = answer_ == next_sample
+    curr_trial = Trial.objects.filter(user = request.user).filter(wordset=wordset).latest('time_started')
+    new_question = Question(trial=curr_trial, question_num = num_shown, correct_word=word, correct = is_correct)
+    new_question.save()
+
+
 
 
 
@@ -250,17 +277,5 @@ def processTeachingAnswer(request):
     X_[teaching_image_id_][answer_] = 1
     numpy.save(X_path, X_)
     request.session['L'] = L_
-
-
-def processTestingAnswer(request):
-
-    user_id_ = int(request.session['user_id'])
-    testing_class_id_ = int(request.session['testing_class_id'])
-    answer_ = int(request.POST['answer'])
-
-    is_correct = True if testing_class_id_ == answer_ else False
-
-    user_response = UserResponse.create(user_id_, is_correct)
-    user_response.save()
 
 
