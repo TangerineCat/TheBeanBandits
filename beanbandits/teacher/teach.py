@@ -5,6 +5,7 @@
 
 import random
 import Queue
+import math
 
 '''
 These are classes to teach the student to recognize character.

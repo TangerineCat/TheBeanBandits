@@ -71,14 +71,14 @@ class WordSetListView(ListView):
         global algo
         context = super(WordSetListView, self).get_context_data(**kwargs)
         self.request.session['n'] = 0
-        # TODO: randomly choose one algorithm to test user.
+        # randomly choose one algorithm to test user.
         algo = random.randint(0,3)
         if algo == RANDOM:
             teacher = teach.Random_Teach(num_classes, num_teaching_images)
         elif algo == WSCS:
             teacher = teach.WSCS_Teach(num_classes, num_teaching_images)
         elif algo == IWSCS:
-            teacher = teach.IWSCS_Teach(num_classes, num_teaching_images, 1)
+            teacher = teach.IWSCS_Teach(num_classes, num_teaching_images, 5)
         elif algo == MAB:
             teacher = teach.MAB_Teach(num_classes, num_teaching_images)
         return context
@@ -171,7 +171,7 @@ def testing(request, pk):
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
-    next_sample = (next_sample + 1) % num_classes
+    next_sample = (next_sample + 3) % num_classes
     next_word = wordlist[next_sample]
 
     context = {'next_word': next_word,
