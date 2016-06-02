@@ -50,8 +50,8 @@ TESTING = 4
 ENDTEST = 5
 RANDOM = 0
 WSCS = 1
-IWSCS = 2
-MAB = 3
+IWSCS = 4
+MAB = 2
 
 
 
@@ -82,7 +82,7 @@ def quiz(request, pk):
         request.session['num_shown'] = num_shown
     request.session['wordset_id'] = pk
     if num_shown == 0:
-        algo = random.randint(0,3)
+        algo = random.randint(0,2)
         request.session['algo'] = algo
         if algo == RANDOM:
             teacher = teach.Random_Teach(num_classes, num_teaching_images)
@@ -213,6 +213,8 @@ def testing(request, pk):
     wordlist = Word.objects.filter(wordset=wordset)
     while next_sample not in not_shown:
         next_sample = random.randint(0,9)
+        if len(not_shown) == 0:
+            break
     not_shown.remove(next_sample)
     next_word = wordlist[next_sample]
     
