@@ -32,10 +32,11 @@ from django.db.models import Max, Min
 
 
 # Define the teaching and testing lengths
-num_teaching_images = 1
-num_testing_images = 1
+num_teaching_images = 30
+num_testing_images = 10
 num_shown = 0
 teacher = None
+algo = 0
 
 
 num_classes = 10
@@ -67,6 +68,7 @@ class WordSetListView(ListView):
 
     def get_context_data(self, **kwargs):
         global teacher
+        global algo
         context = super(WordSetListView, self).get_context_data(**kwargs)
         self.request.session['n'] = 0
         # TODO: randomly choose one algorithm to test user.
@@ -84,12 +86,13 @@ class WordSetListView(ListView):
 
 @login_required()
 def quiz(request, pk):
+    global algo
     global num_shown
     request.session['wordset_id'] = pk
     if num_shown == 0:
         wordsetid = request.session['wordset_id']
         wordset = WordSet.objects.filter(pk=wordsetid).get()
-        mode = Modes(mode = 0)
+        mode = Modes(mode = algo)
         mode.save()
         new_trial = Trial(wordset=wordset, mode=mode, user=request.user, score=0)
         new_trial.save()
@@ -139,6 +142,7 @@ def teaching(request, pk):
 
 
 def feedback(request, pk):
+    global teacher
     answer_ = int(request.POST['answer'])
     next_sample = int(request.session['next_sample'])
     word_id = int(request.session['word_id'])
@@ -146,7 +150,7 @@ def feedback(request, pk):
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
-
+    teacher.teach_judge(answer_, next_sample)
     is_correct = answer_ == next_sample
     curr_trial = Trial.objects.filter(user = request.user).filter(wordset=wordset).latest('time_started')
     new_question = Question(trial=curr_trial, question_num = num_shown, correct_word=word, correct = is_correct)

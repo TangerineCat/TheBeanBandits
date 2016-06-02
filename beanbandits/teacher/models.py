@@ -59,12 +59,14 @@ class Word(models.Model):
 
 class Modes(models.Model):
     RANDOM = 0
-    LEASTUSED = 1
-    BEANBANDIT = 2
+    WSCS = 1
+    IWSCS = 2
+    MAB = 3
     MODE_CHOICES = (
         (RANDOM, "Random"),
-        (LEASTUSED, "Least used"),
-        (BEANBANDIT, "Bean Bandit"),
+        (WSCS, "Wrong Stay Correct Shift"),
+        (IWSCS, "Improved Wrong Stay Correct Shift"),
+        (MAB, "Multi-armed Bandit"),
     )
     mode = models.PositiveIntegerField(primary_key=True, choices=MODE_CHOICES)
 
