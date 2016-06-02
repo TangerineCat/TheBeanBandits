@@ -63,7 +63,6 @@ class WordSetListView(ListView):
 
 @login_required()
 def quiz(request, pk):
-    #TODO: (jleong) add in logic for when it's time to test instead
     global num_shown
     request.session['wordset_id'] = pk
     if num_shown < num_teaching_images:
