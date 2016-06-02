@@ -17,8 +17,8 @@ from django.conf.urls import url, include, patterns
 from django.contrib import admin
 
 urlpatterns = [
+    url(r'^', include('teacher.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^accounts/', include('registration.backends.simple.urls')),
     url(r'^student/', include('student.urls')),
-    url(r'^teacher/', include('teacher.urls')),
 ]

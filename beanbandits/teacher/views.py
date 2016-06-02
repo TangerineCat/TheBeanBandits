@@ -19,16 +19,18 @@ from django.views.generic.list import ListView
 import os
 import numpy
 import random
+from datetime import datetime
 
 # Import our eer module (Expected Error Reduction)
 import eer
 
 # Import the User and UserResponse models (which are stored in the SQL database)
-from teacher.models import Word, WordSet
+from teacher.models import Word, WordSet, Trial, Modes
+from django.contrib.auth.models import User
 
 
 # Define the teaching and testing lengths
-num_teaching_images = 3
+num_teaching_images = 1
 num_testing_images = 1
 num_shown = 0
 
@@ -67,17 +69,15 @@ def quiz(request, pk):
     request.session['wordset_id'] = pk
     if num_shown < num_teaching_images:
         if request.method == 'POST':
+            num_shown += 1
             return feedback(request, pk)
         else:  # get request
-            num_shown += 1
             return teaching(request, pk)
     elif num_shown - num_teaching_images < num_testing_images:
         num_shown += 1
         return testing(request, pk)
     else:
-        #return testResults(request)
-        num_shown = 3
-        return testing(request, pk)
+        return testResults(request)
         
 
 
@@ -142,31 +142,33 @@ def testing(request, pk):
     return render(request, 'teacher/testing.html', context)
 
 def testResults(request):
-    # TODO: Implement this view.
     # Should show statistics of the quiz
     # Should have a link to try other quizes
-
+    
     # Get the average score
     score_sum = 0
-    finished_users = User.objects.filter(is_finished=True)
-    for u in finished_users:
-        finished_correct_responses = UserResponse.objects.filter(
-            user_id=u.user_id).filter(is_correct=True)
-        score_sum += len(finished_correct_responses)
+    finished_trials = Trial.objects.all()
+    wordsetid = request.session['wordset_id']
+    wordset = WordSet.objects.filter(pk=wordsetid).get()
+    mode = Modes(mode = 0)
+    mode.save()
+    score = 0
+    time_finished = datetime.now()
+    new_trial = Trial(wordset=wordset, mode=mode, user=request.user, score=score)
+    Trial.time_finished = time_finished
+    for u in finished_trials:
+        finished_correct_responses = Trial.objects.filter(
+            user = u.user).filter(time_finished=u.time_finished)
+        score_sum += 0#finished_correct_responses.score
 
-    user_id_ = request.session['user_id']
 
-    correct_responses = UserResponse.objects.filter(
-        user_id=user_id_).filter(is_correct=True)
-    score = len(correct_responses)
-
-    user = User.objects.get(user_id=user_id_)
+    user = request.user
     user.score = score
     user.is_finished = True
-    user.save()
+    new_trial.save()
 
-    if len(finished_users) > 0:
-        ave_score = float(score_sum) / len(finished_users)
+    if len(finished_trials) > 0:
+        ave_score = float(score_sum) / len(finished_trials)
     else:
         ave_score = score
 

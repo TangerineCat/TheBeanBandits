@@ -31,15 +31,17 @@ class Command(BaseCommand):
     help = 'our help string comes here'
 
     def _create_characters(self):
+        self._most_common()
         self._least_common()
         self._numbers()
+        self._animals()
         self._difficult1()
         self._difficult2()
 
     def _difficult1(self):
         current_path = os.path.dirname(os.path.realpath(__file__))
         dataset = current_path + "/../../../../Datasets/difficult1.csv"
-        new_word_set = WordSet(name="difficult1 (for advanced and native speakers)", description="difficult characters")
+        new_word_set = WordSet(name="difficult1", description="difficult characters for advanced and native speakers")
         new_word_set.save()
         with open(dataset, 'rb') as fin:
             rank = 0
@@ -55,7 +57,7 @@ class Command(BaseCommand):
     def _difficult2(self):
         current_path = os.path.dirname(os.path.realpath(__file__))
         dataset = current_path + "/../../../../Datasets/difficult2.csv"
-        new_word_set = WordSet(name="difficult2 (for advanced and native speakers)", description="difficult characters")
+        new_word_set = WordSet(name="difficult2", description="difficult characters for advanced and native speakers")
         new_word_set.save()
         with open(dataset, 'rb') as fin:
             rank = 0
@@ -105,7 +107,7 @@ class Command(BaseCommand):
     def _least_common(self):
         current_path = os.path.dirname(os.path.realpath(__file__))
         dataset = current_path + "/../../../../Datasets/dataset.csv"
-        new_word_set = WordSet(name="intermediate", description="last 10 characters")
+        new_word_set = WordSet(name="intermediate", description="990th most common characters")
         new_word_set.save()
         with open(dataset, 'rb') as fin:
             rank = 0
@@ -121,7 +123,7 @@ class Command(BaseCommand):
     def _most_common(self):
         current_path = os.path.dirname(os.path.realpath(__file__))
         dataset = current_path + "/../../../../Datasets/dataset.csv"
-        new_word_set = WordSet(name="most common", description="top 10 characters")
+        new_word_set = WordSet(name="most common", description="top 10 most common characters")
         new_word_set.save()
         with open(dataset, 'rb') as fin:
             rank = 0
