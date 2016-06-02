@@ -271,6 +271,7 @@ def testResults(request):
 
 def processTestingAnswer(request, pk):
 
+    trial_id = request.session['trial_id']
     num_shown = request.session['num_shown']
     answer_ = int(request.POST['answer'])
     next_sample = int(request.session['next_sample'])
@@ -281,7 +282,7 @@ def processTestingAnswer(request, pk):
     wordlist = Word.objects.filter(wordset=wordset)
 
     is_correct = answer_ == next_sample
-    curr_trial = Trial.objects.filter(user = request.user).filter(wordset=wordset).latest('time_started')
+    curr_trial = Trial.objects.filter(id=trial_id)
     new_question = Question(trial=curr_trial, question_num = num_shown, correct_word=word, correct = is_correct)
     new_question.save()
 
