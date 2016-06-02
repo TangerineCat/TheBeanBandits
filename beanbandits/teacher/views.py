@@ -169,10 +169,11 @@ def testResults(request):
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     score_sum = 0
     curr_trial = Trial.objects.filter(user=request.user).filter(wordset=wordset).filter(time_finished=None).latest('time_started')
-    score = len(Question.objects.filter(trial=curr_trial).filter(correct=True))
+    score = len(Question.objects.filter(trial=curr_trial).filter(correct=True).filter(question_num__gt=num_teaching_images))
     time_finished = datetime.now()
     curr_trial.time_finished = time_finished
-    finished_trials = Trial.objects.filter(time_finished=None)
+    finished_trials = Trial.objects.filter(time_finished__isnull=False).filter(wordset=wordset)
+    curr_trial.score = score
     for trial in finished_trials:
         score_sum += trial.score
 
