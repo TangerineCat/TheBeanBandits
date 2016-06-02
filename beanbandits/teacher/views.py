@@ -32,12 +32,12 @@ from django.db.models import Max, Min
 
 
 # Define the teaching and testing lengths
-num_teaching_images = 30
-num_testing_images = 10
-num_shown = 0
-not_shown = range(10)
+num_teaching_images = 3
+num_testing_images = 3
+#num_shown = 0
+#not_shown = range(10)
 teacher = None
-algo = 0
+#algo = 0
 
 
 num_classes = 10
@@ -77,12 +77,18 @@ class WordSetListView(ListView):
 @login_required()
 def quiz(request, pk):
     global teacher
-    global algo
-    global num_shown
-    global not_shown
+    #global algo
+    #global num_shown
+    #global not_shown
+    try:
+        num_shown = request.session['num_shown']
+    except KeyError:
+        num_shown = 0
+        request.session['num_shown'] = num_shown
     request.session['wordset_id'] = pk
     if num_shown == 0:
         algo = random.randint(0,3)
+        request.session['algo'] = algo
         if algo == RANDOM:
             teacher = teach.Random_Teach(num_classes, num_teaching_images)
         elif algo == WSCS:
@@ -92,6 +98,7 @@ def quiz(request, pk):
         elif algo == MAB:
             teacher = teach.MAB_Teach(num_classes, num_teaching_images)
         not_shown = range(10)
+        request.session['not_shown'] = not_shown
         wordsetid = request.session['wordset_id']
         wordset = WordSet.objects.filter(pk=wordsetid).get()
         mode = Modes(mode = algo)
@@ -101,17 +108,20 @@ def quiz(request, pk):
     if num_shown < num_teaching_images:
         if request.method == 'POST':
             num_shown += 1
+            request.session['num_shown'] = num_shown
             return feedback(request, pk)
         else:  # get request
             return teaching(request, pk)
     elif num_shown - num_teaching_images < num_testing_images:
         if request.method == 'POST':
             num_shown += 1
+            request.session['num_shown'] = num_shown
             processTestingAnswer(request, pk)
         if num_shown - num_teaching_images < num_testing_images:
             return testing(request, pk)
         else:
             num_shown = 0
+            request.session['num_shown'] = num_shown
             return testResults(request)
         
 
@@ -125,7 +135,7 @@ def teaching(request, pk):
     """
     Shows a teaching example with options
     """
-    global num_shown
+    num_shown = request.session['num_shown']
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
@@ -151,6 +161,7 @@ def teaching(request, pk):
 
 def feedback(request, pk):
     global teacher
+    num_shown = request.session['num_shown']
     answer_ = int(request.POST['answer'])
     next_sample = int(request.session['next_sample'])
     word_id = int(request.session['word_id'])
@@ -176,7 +187,8 @@ def testing(request, pk):
     """
     Shows a testing example with options
     """
-    global not_shown
+    num_shown = request.session['num_shown']
+    not_shown = request.session['not_shown']
     next_sample = request.session['next_sample']
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
@@ -193,6 +205,7 @@ def testing(request, pk):
                }
     request.session['next_sample'] = next_sample
     request.session['word_id'] = next_word.id
+    request.session['not_shown'] = not_shown
     n = request.session['n']
     request.session['n'] = n + 1
 
@@ -237,6 +250,7 @@ def testResults(request):
 
 def processTestingAnswer(request, pk):
 
+    num_shown = request.session['num_shown']
     answer_ = int(request.POST['answer'])
     next_sample = int(request.session['next_sample'])
     word_id = int(request.session['word_id'])
