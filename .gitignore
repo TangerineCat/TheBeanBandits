@@ -247,3 +247,5 @@ Final report/*.pdf
 beanbanditenv/
 *.sqlite3
 *.sublime-project
+*~
+*.swp
