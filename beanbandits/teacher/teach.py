@@ -58,7 +58,7 @@ class Teach(object):
         print "Character Learning begins!"
     
     def __reduce__(self):
-        return (self.__class__,(self.n_samples,self.teach_times,self.teach_process))
+        return (self.__class__,(self.n_samples,self.teach_times))
 
 # random choose teaching sample
 
@@ -118,7 +118,7 @@ class IWSCS_Teach(Teach):
         Teach.__init__(self, n_samples, teach_times)
         self.prev_sample_index = prev_sample_index
         self.character_id = character_id
-        self.revisit_period = max(1, revisit_period)
+        self.revisit_period = revisit_period
         self.unlearned_character = unlearned_character
         random.shuffle(self.unlearned_character)
 

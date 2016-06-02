@@ -189,7 +189,7 @@ def feedback(request, pk):
     teacher.teach_judge(answer_, next_sample)
     pickle.dump(teacher, open("../Datasets/" + str(trial_id), "wb"))
     is_correct = answer_ == next_sample
-    curr_trial = Trial.objects.filter(user = request.user).filter(wordset=wordset).latest('time_started')
+    curr_trial = Trial.objects.filter(id = trial_id).get()
     new_question = Question(trial=curr_trial, question_num = num_shown, correct_word=word, correct = is_correct)
     new_question.save()
 
@@ -233,10 +233,11 @@ def testResults(request):
     # Should show statistics of the quiz
     # Should have a link to try other quizes
     # Get the average score
+    trial_id = request.session['trial_id']
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     score_sum = 0
-    curr_trial = Trial.objects.filter(user=request.user).filter(wordset=wordset).filter(time_finished=None).latest('time_started')
+    curr_trial = Trial.objects.filter(id = trial_id).get()
     score = len(Question.objects.filter(trial=curr_trial).filter(correct=True).filter(question_num__gt=num_teaching_images))
     time_finished = datetime.now()
     min_time = Trial.objects.all().aggregate(Min('time_started'))
