@@ -27,11 +27,10 @@ import eer
 from teacher.models import Word, WordSet
 
 
-# Set the name of the dataset
-dataset_name = 'chinese'
 # Define the teaching and testing lengths
 num_teaching_images = 3
 num_testing_images = 1
+num_shown = 0
 
 
 num_classes = 10
@@ -65,11 +64,20 @@ class WordSetListView(ListView):
 @login_required()
 def quiz(request, pk):
     #TODO: (jleong) add in logic for when it's time to test instead
+    num_shown = 0
     request.session['wordset_id'] = pk
-    if request.method == 'POST':
-        return feedback(request, pk)
-    else:  # get request
-        return teaching(request, pk)
+    if num_shown < num_teaching_images:
+        if request.method == 'POST':
+            return feedback(request, pk)
+        else:  # get request
+            num_shown += 1
+            return teaching(request, pk)
+    elif num_shown - num_teaching_images < num_testing_images:
+        num_shown += 1
+        return testing(request, pk)
+    else:
+        return testResults(request)
+        
 
 
 def getNext(n):
@@ -112,29 +120,25 @@ def feedback(request, pk):
     return render(request, 'teacher/feedback.html', context)
 
 
-def testing(request):
-    # TODO (jleong) implement testing procedure and template
-    # at the end of testing,
-    testing_image_num_ = request.session['testing_image_num']
-    testing_samples_ = request.session['testing_samples']
+def testing(request, pk):
+    """
+    Shows a teaching example with options
+    """
+    wordsetid = request.session['wordset_id']
+    wordset = WordSet.objects.filter(pk=wordsetid).get()
+    wordlist = Word.objects.filter(wordset=wordset)
+    next_sample = getNext(len(wordlist))
+    next_word = wordlist[next_sample]
 
-    testing_image_num = testing_image_num_ + 1
+    context = {'next_word': next_word,
+               'wordlist': wordlist,
+               }
+    request.session['next_sample'] = next_sample
+    request.session['word_id'] = next_word.id
+    n = request.session['n']
+    request.session['n'] = n + 1
 
-    testing_image_id = testing_samples_[testing_image_num - 1]
-    testing_class_id = sample_classes[testing_image_id]
-    character = characters[testing_image_id]
-
-    request.session['testing_image_num'] = testing_image_num
-    request.session['testing_image_id'] = testing_image_id
-    request.session['testing_class_id'] = testing_class_id
-    request.session['character'] = character
-
-    context = {'testing_image_num': testing_image_num,
-               'num_testing_images': num_testing_images,
-               'class_names': class_names,
-               'character': character}
-
-    return render(request, 'teacher/testing.html', context)
+    return render(request, 'teacher/teaching.html', context)
 
 def testResults(request):
     # TODO: Implement this view.
