@@ -19,7 +19,7 @@ from django.views.generic.list import ListView
 import os
 import numpy
 import random
-from datetime import datetime
+from datetime import datetime, time
 
 # Import our eer module (Expected Error Reduction)
 import eer
@@ -27,7 +27,7 @@ import eer
 # Import the User and UserResponse models (which are stored in the SQL database)
 from teacher.models import Word, WordSet, Trial, Modes, Question
 from django.contrib.auth.models import User
-from django.db.models import Max
+from django.db.models import Max, Min
 
 
 # Define the teaching and testing lengths
@@ -171,11 +171,15 @@ def testResults(request):
     curr_trial = Trial.objects.filter(user=request.user).filter(wordset=wordset).filter(time_finished=None).latest('time_started')
     score = len(Question.objects.filter(trial=curr_trial).filter(correct=True).filter(question_num__gt=num_teaching_images))
     time_finished = datetime.now()
+    min_time = Trial.objects.all().aggregate(Min('time_started'))
     curr_trial.time_finished = time_finished
-    finished_trials = Trial.objects.filter(time_finished__isnull=False).filter(wordset=wordset)
+    finished_trials = Trial.objects.filter(wordset=wordset)
     curr_trial.score = score
+    curr_trial.save()
+    print len(finished_trials)
     for trial in finished_trials:
-        score_sum += trial.score
+        score_sum += float(trial.score)
+    print(score_sum)
 
     user = request.user
     user.score = score
