@@ -121,10 +121,7 @@ class IWSCS_Teach(Teach):
         self.revisit_period = revisit_period
         self.unlearned_character = unlearned_character
         random.shuffle(self.unlearned_character)
-
-        self.revisit_queue = Queue.Queue()
-        for _ in range(self.revisit_period):
-            self.revisit_queue.put(-1)
+        self.revisit_queue = revisit_queue 
     
     def __reduce__(self):
         return (self.__class__,(self.n_samples,self.teach_times,self.revisit_period,self.prev_sample_index,self.character_id,self.unlearned_character,self.revisit_queue))
@@ -132,7 +129,7 @@ class IWSCS_Teach(Teach):
     def get_next_teach_sample(self):
         if not self.terminated():
             self.teach_process += 1
-            self.character_id = self.revisit_queue.get()
+            self.character_id = self.revisit_queue.pop(0)
             if self.character_id == -1:
                 return self.unlearned_character[self.prev_sample_index]
             else:
@@ -146,16 +143,16 @@ class IWSCS_Teach(Teach):
                 if self.character_id == -1:
                     self.prev_sample_index = (
                         self.prev_sample_index + 1) % self.n_samples
-                self.revisit_queue.put(-1)
+                self.revisit_queue.append(-1)
 
             else:
                 if self.character_id == -1:
-                    self.revisit_queue.put(self.unlearned_character[
+                    self.revisit_queue.append(self.unlearned_character[
                                            self.prev_sample_index])
                     self.prev_sample_index = (
                         self.prev_sample_index + 1) % self.n_samples
                 else:
-                    self.revisit_queue.put(self.character_id)
+                    self.revisit_queue.append(self.character_id)
                     
                     
 # Multi-armed bandit teaching strategy
@@ -187,7 +184,6 @@ class MAB_Teach(Teach):
                     self.arm_index = arm
                     self.sample_index = self.indices[arm]
                     return self.sample_index
-            
             # UCB1 algorithm
             ucb_values = [0.0 for _ in range(self.n_samples)]
             total_counts = sum(self.counts)
@@ -221,7 +217,7 @@ class MAB_Teach(Teach):
             if choice == groundtruth:
                 performance_value = 1.0
             else:
-                performance_value = 0.0
+                performance_value = 0
                 
             reward = performance_value - self.recent_performance[self.sample_index]
             # reward = performance_value - self.performance[self.sample_index]

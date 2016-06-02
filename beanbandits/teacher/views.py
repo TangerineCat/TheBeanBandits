@@ -50,8 +50,8 @@ TESTING = 4
 ENDTEST = 5
 RANDOM = 0
 WSCS = 1
-IWSCS = 4
-MAB = 2
+IWSCS = 2
+MAB = 3
 
 
 
@@ -80,27 +80,34 @@ def quiz(request, pk):
     except KeyError:
         num_shown = 0
         request.session['num_shown'] = num_shown
+    print "num_shown = " + str(num_shown)
+    #if request.session['wordset_id'] != pk:
+        #request.session.flush()
     request.session['wordset_id'] = pk
     if num_shown == 0:
-        algo = random.randint(0,2)
+        algo = random.randint(0,3)
         request.session['algo'] = algo
         if algo == RANDOM:
+            print "RANDOM"
             teacher = teach.Random_Teach(num_classes, num_teaching_images)
         elif algo == WSCS:
+            print "WSCS"
             prev_sample_index = 0
             unlearned_character = range(num_classes)
             teacher = teach.WSCS_Teach(num_classes, num_teaching_images, prev_sample_index, unlearned_character)
         elif algo == IWSCS:
+            print "IWSCS"
             prev_sample_index = 0
             character_id = -1
             unlearned_character = range(num_classes)
             revisit_period = 5
             random.shuffle(unlearned_character)
-            revisit_queue = Queue.Queue()
+            revisit_queue = [] 
             for _ in range(revisit_period):
-                revisit_queue.put(-1)
+                revisit_queue.append(-1)
             teacher = teach.IWSCS_Teach(num_classes, num_teaching_images, revisit_period, prev_sample_index, character_id, unlearned_character, revisit_queue)
         elif algo == MAB:
+            print "MAB"
             sample_index = 0
             arm_index = 0
             recent_performance = [0.0 for _ in range(num_classes)]
@@ -144,7 +151,9 @@ def quiz(request, pk):
 def getNext(request, n):
     trial_id = request.session['trial_id']
     teacher = pickle.load(open("../Datasets/" + str(trial_id), "rb"))
-    return teacher.get_next_teach_sample()
+    ans = teacher.get_next_teach_sample()
+    pickle.dump(teacher, open("../Datasets/" + str(trial_id), "wb"))
+    return ans
 
 
 def teaching(request, pk):
@@ -186,6 +195,8 @@ def feedback(request, pk):
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
+    print str(answer_)
+    print str(next_sample)
     teacher.teach_judge(answer_, next_sample)
     pickle.dump(teacher, open("../Datasets/" + str(trial_id), "wb"))
     is_correct = answer_ == next_sample
@@ -215,7 +226,8 @@ def testing(request, pk):
         next_sample = random.randint(0,9)
         if len(not_shown) == 0:
             break
-    not_shown.remove(next_sample)
+    if len(not_shown) != 0:
+        not_shown.remove(next_sample)
     next_word = wordlist[next_sample]
     
     context = {'next_word': next_word,
@@ -282,7 +294,7 @@ def processTestingAnswer(request, pk):
     wordlist = Word.objects.filter(wordset=wordset)
 
     is_correct = answer_ == next_sample
-    curr_trial = Trial.objects.filter(id=trial_id)
+    curr_trial = Trial.objects.filter(id=trial_id).get()
     new_question = Question(trial=curr_trial, question_num = num_shown, correct_word=word, correct = is_correct)
     new_question.save()
 
