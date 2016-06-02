@@ -33,8 +33,8 @@ from django.db.models import Max, Min
 
 
 # Define the teaching and testing lengths
-num_teaching_images = 3
-num_testing_images = 3
+num_teaching_images = 30
+num_testing_images = 10
 #num_shown = 0
 #not_shown = range(10)
 #algo = 0
