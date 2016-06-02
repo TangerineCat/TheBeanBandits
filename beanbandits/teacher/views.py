@@ -75,7 +75,9 @@ def quiz(request, pk):
         num_shown += 1
         return testing(request, pk)
     else:
-        return testResults(request)
+        #return testResults(request)
+        num_shown = 3
+        return testing(request, pk)
         
 
 
@@ -121,7 +123,7 @@ def feedback(request, pk):
 
 def testing(request, pk):
     """
-    Shows a teaching example with options
+    Shows a testing example with options
     """
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
@@ -137,7 +139,7 @@ def testing(request, pk):
     n = request.session['n']
     request.session['n'] = n + 1
 
-    return render(request, 'teacher/teaching.html', context)
+    return render(request, 'teacher/testing.html', context)
 
 def testResults(request):
     # TODO: Implement this view.
