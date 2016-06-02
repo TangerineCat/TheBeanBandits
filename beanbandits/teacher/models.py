@@ -82,3 +82,11 @@ class Trial(models.Model):
 
     def __str__(self):
         return str(self.user) + ' on ' + str(self.wordset)
+
+class Question(models.Model):
+    trial = models.ForeignKey(Trial)
+    question_num = models.PositiveIntegerField()
+    correct_word = models.ForeignKey(Word)
+    correct = models.NullBooleanField(null=True)
+    choice = models.PositiveIntegerField(null=True)
+    time = models.DateTimeField(auto_now_add=True)

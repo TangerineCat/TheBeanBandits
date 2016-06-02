@@ -67,6 +67,13 @@ class WordSetListView(ListView):
 def quiz(request, pk):
     global num_shown
     request.session['wordset_id'] = pk
+    if num_shown == 0:
+        wordsetid = request.session['wordset_id']
+        wordset = WordSet.objects.filter(pk=wordsetid).get()
+        mode = Modes(mode = 0)
+        mode.save()
+        new_trial = Trial(wordset=wordset, mode=mode, user=request.user, score=0)
+        new_trial.save()
     if num_shown < num_teaching_images:
         if request.method == 'POST':
             num_shown += 1
@@ -97,7 +104,7 @@ def teaching(request, pk):
 
     context = {'next_word': next_word,
                'wordlist': wordlist,
-               }
+    }
     request.session['next_sample'] = next_sample
     request.session['word_id'] = next_word.id
     n = request.session['n']
@@ -146,20 +153,16 @@ def testResults(request):
     # Should have a link to try other quizes
     
     # Get the average score
-    score_sum = 0
-    finished_trials = Trial.objects.all()
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
-    mode = Modes(mode = 0)
-    mode.save()
+    score_sum = 0
     score = 0
     time_finished = datetime.now()
-    new_trial = Trial(wordset=wordset, mode=mode, user=request.user, score=score)
-    Trial.time_finished = time_finished
-    for u in finished_trials:
-        finished_correct_responses = Trial.objects.filter(
-            user = u.user).filter(time_finished=u.time_finished)
-        score_sum += 0#finished_correct_responses.score
+    curr_trial = Trial.objects.filter(user = request.user).filter(wordset=wordset).filter(time_finished=None)
+    curr_trial.time_finished = time_finished
+    finished_trials = Trial.objects.filter(time_finished=None)
+    for trial in finished_trials:
+        score_sum += trial.score
 
 
     user = request.user
