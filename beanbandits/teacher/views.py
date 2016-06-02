@@ -127,11 +127,10 @@ def teaching(request, pk):
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
     next_sample = getNext(len(wordlist))
-    print(next_sample)
     next_word = wordlist[next_sample]
 
     context = {'next_word': next_word,
-               'wordlist': wordlist,
+               'wordlist': wordlist.order_by('?'),
     }
     request.session['next_sample'] = next_sample
     request.session['word_id'] = next_word.id
@@ -176,7 +175,7 @@ def testing(request, pk):
     next_word = wordlist[next_sample]
 
     context = {'next_word': next_word,
-               'wordlist': wordlist,
+               'wordlist': wordlist.order_by('?'),
                }
     request.session['next_sample'] = next_sample
     request.session['word_id'] = next_word.id
