@@ -35,6 +35,7 @@ from django.db.models import Max, Min
 num_teaching_images = 30
 num_testing_images = 10
 num_shown = 0
+not_shown = range(10)
 teacher = None
 algo = 0
 
@@ -130,7 +131,7 @@ def teaching(request, pk):
     next_word = wordlist[next_sample]
 
     context = {'next_word': next_word,
-               'wordlist': wordlist.order_by('?'),
+               'wordlist': wordlist,
     }
     request.session['next_sample'] = next_sample
     request.session['word_id'] = next_word.id
@@ -167,15 +168,18 @@ def testing(request, pk):
     """
     Shows a testing example with options
     """
+    global not_shown
     next_sample = request.session['next_sample']
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
-    next_sample = (next_sample + 3) % num_classes
+    while next_sample not in not_shown:
+        next_sample = random.randint(0,9)
+    not_shown.remove(next_sample)
     next_word = wordlist[next_sample]
-
+    
     context = {'next_word': next_word,
-               'wordlist': wordlist.order_by('?'),
+               'wordlist': wordlist,
                }
     request.session['next_sample'] = next_sample
     request.session['word_id'] = next_word.id
