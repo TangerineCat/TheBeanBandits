@@ -23,6 +23,7 @@ from datetime import datetime, time
 
 # Import our eer module (Expected Error Reduction)
 import eer
+import teach
 
 # Import the User and UserResponse models (which are stored in the SQL database)
 from teacher.models import Word, WordSet, Trial, Modes, Question
@@ -34,9 +35,11 @@ from django.db.models import Max, Min
 num_teaching_images = 1
 num_testing_images = 1
 num_shown = 0
+teacher = None
 
 
 num_classes = 10
+teacher = teach.Teach(num_classes, num_teaching_images)
 
 START = 0
 TEACH = 1
@@ -44,6 +47,11 @@ RESPONSE = 2
 ENDTEACH = 3
 TESTING = 4
 ENDTEST = 5
+RANDOM = 0
+WSCS = 1
+IWSCS = 2
+MAB = 3
+
 
 
 class WordSetListView(ListView):
@@ -58,9 +66,19 @@ class WordSetListView(ListView):
         return WordSet.objects.all()
 
     def get_context_data(self, **kwargs):
+        global teacher
         context = super(WordSetListView, self).get_context_data(**kwargs)
         self.request.session['n'] = 0
         # TODO: randomly choose one algorithm to test user.
+        algo = random.randint(0,3)
+        if algo == RANDOM:
+            teacher = teach.Random_Teach(num_classes, num_teaching_images)
+        elif algo == WSCS:
+            teacher = teach.WSCS_Teach(num_classes, num_teaching_images)
+        elif algo == IWSCS:
+            teacher = teach.IWSCS_Teach(num_classes, num_teaching_images, 1)
+        elif algo == MAB:
+            teacher = teach.MAB_Teach(num_classes, num_teaching_images)
         return context
 
 
@@ -94,7 +112,8 @@ def quiz(request, pk):
 
 
 def getNext(n):
-    return random.randint(0, n - 1)
+    global teacher
+    return teacher.get_next_teach_sample()
 
 
 def teaching(request, pk):
@@ -105,6 +124,7 @@ def teaching(request, pk):
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
     next_sample = getNext(len(wordlist))
+    print(next_sample)
     next_word = wordlist[next_sample]
 
     context = {'next_word': next_word,
@@ -114,7 +134,6 @@ def teaching(request, pk):
     request.session['word_id'] = next_word.id
     n = request.session['n']
     request.session['n'] = n + 1
-    
 
     return render(request, 'teacher/teaching.html', context)
 
@@ -145,10 +164,11 @@ def testing(request, pk):
     """
     Shows a testing example with options
     """
+    next_sample = request.session['next_sample']
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
-    next_sample = getNext(len(wordlist))
+    next_sample = (next_sample + 1) % num_classes
     next_word = wordlist[next_sample]
 
     context = {'next_word': next_word,
@@ -192,7 +212,9 @@ def testResults(request):
 
     context = {'score': score,
                'num_testing_images': num_testing_images,
-               'ave_score': ave_score}
+               'ave_score': ave_score,
+               'origin': "selection.html",
+               }
 
     return render(request, 'teacher/testresults.html', context)
 
