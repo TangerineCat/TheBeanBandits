@@ -32,7 +32,7 @@ from django.db.models import Max, Min
 
 
 # Define the teaching and testing lengths
-num_teaching_images = 30
+num_teaching_images = 1
 num_testing_images = 10
 num_shown = 0
 not_shown = range(10)
@@ -68,11 +68,20 @@ class WordSetListView(ListView):
         return WordSet.objects.all()
 
     def get_context_data(self, **kwargs):
-        global teacher
-        global algo
         context = super(WordSetListView, self).get_context_data(**kwargs)
         self.request.session['n'] = 0
         # randomly choose one algorithm to test user.
+        return context
+
+
+@login_required()
+def quiz(request, pk):
+    global teacher
+    global algo
+    global num_shown
+    global not_shown
+    request.session['wordset_id'] = pk
+    if num_shown == 0:
         algo = random.randint(0,3)
         if algo == RANDOM:
             teacher = teach.Random_Teach(num_classes, num_teaching_images)
@@ -82,15 +91,7 @@ class WordSetListView(ListView):
             teacher = teach.IWSCS_Teach(num_classes, num_teaching_images, 5)
         elif algo == MAB:
             teacher = teach.MAB_Teach(num_classes, num_teaching_images)
-        return context
-
-
-@login_required()
-def quiz(request, pk):
-    global algo
-    global num_shown
-    request.session['wordset_id'] = pk
-    if num_shown == 0:
+        not_shown = range(10)
         wordsetid = request.session['wordset_id']
         wordset = WordSet.objects.filter(pk=wordsetid).get()
         mode = Modes(mode = algo)
@@ -124,14 +125,21 @@ def teaching(request, pk):
     """
     Shows a teaching example with options
     """
+    global num_shown
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
     next_sample = getNext(len(wordlist))
-    next_word = wordlist[next_sample]
+    try:
+        next_word = wordlist[next_sample]
+    except TypeError:
+        print "TypeError, tried to get" + next_sample
+        next_word = wordlist[random.randint(0,9)]
 
     context = {'next_word': next_word,
                'wordlist': wordlist,
+               'teaching_image_num': (num_shown+1),
+               'num_teaching_images': num_teaching_images,
     }
     request.session['next_sample'] = next_sample
     request.session['word_id'] = next_word.id
@@ -180,6 +188,8 @@ def testing(request, pk):
     
     context = {'next_word': next_word,
                'wordlist': wordlist,
+               'testing_image_num': (num_shown - num_teaching_images + 1),
+               'num_testing_images': num_testing_images,
                }
     request.session['next_sample'] = next_sample
     request.session['word_id'] = next_word.id
