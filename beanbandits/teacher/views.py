@@ -213,7 +213,7 @@ def testResults(request):
     context = {'score': score,
                'num_testing_images': num_testing_images,
                'ave_score': ave_score,
-               'origin': "selection.html",
+               'origin': "",
                }
 
     return render(request, 'teacher/testresults.html', context)
