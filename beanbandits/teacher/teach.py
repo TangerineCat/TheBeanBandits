@@ -154,6 +154,48 @@ class IWSCS_Teach(Teach):
                 else:
                     self.revisit_queue.append(self.character_id)
                     
+
+# Worst performance teaching strategy           
+class WP_Teach(Teach):
+    
+    def __init__(self, n_samples, teach_times, accuracy, counts, sample_index):
+        
+        Teach.__init__(self, n_samples, teach_times)
+        '''
+        self.accuracy = [0.0 for _ in range(self.n_samples)]
+        self.counts = [0 for _ in range(self.n_samples)]
+        self.sample_index = 0
+        '''
+        
+        self.accuracy = accuracy
+        self.counts = counts
+        self.sample_index = sample_index
+        
+    def __reduce__(self):
+        return (self.__class__,(self.n_samples,self.teach_times,self.accuracy,self.counts,self.sample_index))
+        
+        
+    def get_next_teach_sample(self):
+        
+        if not self.terminated():
+            self.teach_process += 1
+            minimum = min(self.accuracy)
+            indices = [x for x in range(self.n_samples) if self.accuracy[x] == minimum]
+            self.sample_index = random.choice(indices)
+            self.counts[self.sample_index] += 1
+            return self.sample_index
+            
+        else:
+            return (-1)
+            
+    def teach_judge(self, choice, groundtruth):
+        if not self.terminated():
+            n = self.counts[self.sample_index]
+            if choice == groundtruth:
+                self.accuracy[self.sample_index] = self.accuracy[self.sample_index] * (n-1) / n + 1.0 / n
+            else:
+                self.accuracy[self.sample_index] = self.accuracy[self.sample_index] * (n-1) / n
+                    
                     
 # Multi-armed bandit teaching strategy
 class MAB_Teach(Teach):
