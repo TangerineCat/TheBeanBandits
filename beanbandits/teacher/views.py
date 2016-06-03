@@ -54,6 +54,7 @@ RANDOM = 0
 WSCS = 1
 IWSCS = 2
 MAB = 3
+WP = 4
 
 
 
@@ -87,7 +88,8 @@ def quiz(request, pk):
         #request.session.flush()
     request.session['wordset_id'] = pk
     if request.method != 'POST' and num_shown == 0:
-        algo = random.randint(0,3)
+        algo = random.randint(0,4)
+        algo = 4
         request.session['algo'] = algo
         if algo == RANDOM:
             print "RANDOM"
@@ -119,6 +121,12 @@ def quiz(request, pk):
             counts = [0 for _ in range(num_classes)]
             avg = [0.0 for _ in range(num_classes)]
             teacher = teach.MAB_Teach(num_classes, num_teaching_images, sample_index, arm_index, recent_performance, performance, learning_counts, indices, counts, avg)
+        elif algo == WP:
+            print "WP"
+            accuracy = [0.0 for _ in range(num_classes)]
+            counts = [0 for _ in range(num_classes)]
+            sample_index = 0
+            teacher = teach.WP_Teach(num_classes, num_teaching_images, accuracy, counts, sample_index)
         not_shown = range(10)
         request.session['not_shown'] = not_shown
         wordsetid = request.session['wordset_id']
