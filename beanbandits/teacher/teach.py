@@ -56,6 +56,9 @@ class Teach(object):
 
     def print_begin(self):
         print "Character Learning begins!"
+    
+    def __reduce__(self):
+        return (self.__class__,(self.n_samples,self.teach_times))
 
 # random choose teaching sample
 
@@ -71,16 +74,18 @@ class Random_Teach(Teach):
             return character_id
         else:
             return (-1)
+    def __reduce__(self):
+        return (self.__class__,(self.n_samples,self.teach_times))
 
 # Wrong-Stay-Correct-Shift: keep teach student until he learns the character
 
 
 class WSCS_Teach(Teach):
 
-    def __init__(self, n_samples, teach_times):
+    def __init__(self, n_samples, teach_times, prev_sample_index, unlearned_character):
         Teach.__init__(self, n_samples, teach_times)
-        self.prev_sample_index = 0
-        self.unlearned_character = range(self.n_samples)
+        self.prev_sample_index = prev_sample_index
+        self.unlearned_character = unlearned_character
         random.shuffle(self.unlearned_character)
 
     def get_next_teach_sample(self):
@@ -97,6 +102,9 @@ class WSCS_Teach(Teach):
                 self.prev_sample_index = (
                     self.prev_sample_index + 1) % self.n_samples
 
+    def __reduce__(self):
+        return (self.__class__,(self.n_samples,self.teach_times,self.prev_sample_index,self.unlearned_character))
+
 '''
 Improved-Wrong-Stay-Correct-Shift:
 keep teach the student every "revisit_period" rounds until he learns the
@@ -106,22 +114,22 @@ character
 
 class IWSCS_Teach(Teach):
 
-    def __init__(self, n_samples, teach_times, revisit_period):
+    def __init__(self, n_samples, teach_times, revisit_period, prev_sample_index, character_id, unlearned_character,revisit_queue):
         Teach.__init__(self, n_samples, teach_times)
-        self.prev_sample_index = 0
-        self.character_id = -1
-        self.revisit_period = max(1, revisit_period)
-        self.unlearned_character = range(self.n_samples)
+        self.prev_sample_index = prev_sample_index
+        self.character_id = character_id
+        self.revisit_period = revisit_period
+        self.unlearned_character = unlearned_character
         random.shuffle(self.unlearned_character)
-
-        self.revisit_queue = Queue.Queue()
-        for _ in range(self.revisit_period):
-            self.revisit_queue.put(-1)
+        self.revisit_queue = revisit_queue 
+    
+    def __reduce__(self):
+        return (self.__class__,(self.n_samples,self.teach_times,self.revisit_period,self.prev_sample_index,self.character_id,self.unlearned_character,self.revisit_queue))
 
     def get_next_teach_sample(self):
         if not self.terminated():
             self.teach_process += 1
-            self.character_id = self.revisit_queue.get()
+            self.character_id = self.revisit_queue.pop(0)
             if self.character_id == -1:
                 return self.unlearned_character[self.prev_sample_index]
             else:
@@ -135,34 +143,37 @@ class IWSCS_Teach(Teach):
                 if self.character_id == -1:
                     self.prev_sample_index = (
                         self.prev_sample_index + 1) % self.n_samples
-                self.revisit_queue.put(-1)
+                self.revisit_queue.append(-1)
 
             else:
                 if self.character_id == -1:
-                    self.revisit_queue.put(self.unlearned_character[
+                    self.revisit_queue.append(self.unlearned_character[
                                            self.prev_sample_index])
                     self.prev_sample_index = (
                         self.prev_sample_index + 1) % self.n_samples
                 else:
-                    self.revisit_queue.put(self.character_id)
+                    self.revisit_queue.append(self.character_id)
                     
                     
 # Multi-armed bandit teaching strategy
 class MAB_Teach(Teach):
     
-    def __init__(self, n_samples, teach_times):
+    def __init__(self, n_samples, teach_times, sample_index, arm_index, recent_performance, performance, learning_counts, indices, counts, avg):
         Teach.__init__(self, n_samples, teach_times)
-        self.sample_index = 0
-        self.arm_index = 0
+        self.sample_index = sample_index
+        self.arm_index = arm_index
         
-        self.recent_performance = [0.0 for _ in range(self.n_samples)]
-        self.performance = [0.0 for _ in range(self.n_samples)]
-        self.learning_counts = [0 for _ in range(self.n_samples)]
+        self.recent_performance = recent_performance
+        self.performance = performance
+        self.learning_counts = learning_counts
         
-        self.indices = range(self.n_samples)
+        self.indices = indices
         
-        self.counts = [0 for _ in range(self.n_samples)]
-        self.avg = [0.0 for _ in range(self.n_samples)]
+        self.counts = counts
+        self.avg = avg
+    
+    def __reduce__(self):
+        return (self.__class__,(self.n_samples,self.teach_times,self.sample_index,self.arm_index,self.recent_performance,self.performance,self.learning_counts,self.indices,self.counts,self.avg))
         
     def get_next_teach_sample(self):
         if not self.terminated():
@@ -173,7 +184,6 @@ class MAB_Teach(Teach):
                     self.arm_index = arm
                     self.sample_index = self.indices[arm]
                     return self.sample_index
-            
             # UCB1 algorithm
             ucb_values = [0.0 for _ in range(self.n_samples)]
             total_counts = sum(self.counts)
@@ -207,7 +217,7 @@ class MAB_Teach(Teach):
             if choice == groundtruth:
                 performance_value = 1.0
             else:
-                performance_value = 0.0
+                performance_value = 0
                 
             reward = performance_value - self.recent_performance[self.sample_index]
             # reward = performance_value - self.performance[self.sample_index]

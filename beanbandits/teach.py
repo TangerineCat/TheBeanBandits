@@ -211,6 +211,13 @@ class MAB_Teach(Teach):
             reward = performance_value - self.recent_performance[self.sample_index]
             # reward = performance_value - self.performance[self.sample_index]
             
+            '''
+            print "teach round:", self.teach_process, 
+            print "arm chosen:", self.arm_index, 
+            print "character id:", self.sample_index,
+            print "reward:", reward
+            '''
+            
             self.counts[self.arm_index] += 1
             n = self.counts[self.arm_index]
             avg_value = self.avg[self.arm_index]
@@ -225,5 +232,12 @@ class MAB_Teach(Teach):
                 self.indices = sorted(range(len(self.performance)), key=lambda k: self.performance[k])
             else:
                 self.segment()
+            
+            '''
+            print "performance:", self.performance
+            print "indices:", self.indices
+            print "avg:", self.avg
+            print
+            '''
             
             self.recent_performance[self.sample_index] = performance_value

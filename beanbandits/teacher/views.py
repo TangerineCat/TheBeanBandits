@@ -19,11 +19,12 @@ from django.views.generic.list import ListView
 import os
 import numpy
 import random
+import Queue
 from datetime import datetime, time
 
 # Import our eer module (Expected Error Reduction)
-import eer
 import teach
+import pickle
 
 # Import the User and UserResponse models (which are stored in the SQL database)
 from teacher.models import Word, WordSet, Trial, Modes, Question
@@ -32,16 +33,14 @@ from django.db.models import Max, Min
 
 
 # Define the teaching and testing lengths
-num_teaching_images = 1
+num_teaching_images = 30
 num_testing_images = 10
-num_shown = 0
-not_shown = range(10)
-teacher = None
-algo = 0
+#num_shown = 0
+#not_shown = range(10)
+#algo = 0
 
 
 num_classes = 10
-teacher = teach.Teach(num_classes, num_teaching_images)
 
 START = 0
 TEACH = 1
@@ -78,60 +77,96 @@ class WordSetListView(ListView):
 
 @login_required()
 def quiz(request, pk):
-    global teacher
-    global algo
-    global num_shown
-    global not_shown
+    try:
+        num_shown = request.session['num_shown']
+    except KeyError:
+        num_shown = 0
+        request.session['num_shown'] = num_shown
+    print "num_shown = " + str(num_shown)
+    #if request.session['wordset_id'] != pk:
+        #request.session.flush()
     request.session['wordset_id'] = pk
     if num_shown == 0:
         algo = random.randint(0,3)
+        request.session['algo'] = algo
         if algo == RANDOM:
+            print "RANDOM"
             teacher = teach.Random_Teach(num_classes, num_teaching_images)
         elif algo == WSCS:
-            teacher = teach.WSCS_Teach(num_classes, num_teaching_images)
+            print "WSCS"
+            prev_sample_index = 0
+            unlearned_character = range(num_classes)
+            teacher = teach.WSCS_Teach(num_classes, num_teaching_images, prev_sample_index, unlearned_character)
         elif algo == IWSCS:
-            teacher = teach.IWSCS_Teach(num_classes, num_teaching_images, 5)
+            print "IWSCS"
+            prev_sample_index = 0
+            character_id = -1
+            unlearned_character = range(num_classes)
+            revisit_period = 5
+            random.shuffle(unlearned_character)
+            revisit_queue = [] 
+            for _ in range(revisit_period):
+                revisit_queue.append(-1)
+            teacher = teach.IWSCS_Teach(num_classes, num_teaching_images, revisit_period, prev_sample_index, character_id, unlearned_character, revisit_queue)
         elif algo == MAB:
-            teacher = teach.MAB_Teach(num_classes, num_teaching_images)
+            print "MAB"
+            sample_index = 0
+            arm_index = 0
+            recent_performance = [0.0 for _ in range(num_classes)]
+            performance = [0.0 for _ in range(num_classes)]
+            learning_counts = [0 for _ in range(num_classes)]
+            indices = range(num_classes)
+            counts = [0 for _ in range(num_classes)]
+            avg = [0.0 for _ in range(num_classes)]
+            teacher = teach.MAB_Teach(num_classes, num_teaching_images, sample_index, arm_index, recent_performance, performance, learning_counts, indices, counts, avg)
         not_shown = range(10)
+        request.session['not_shown'] = not_shown
         wordsetid = request.session['wordset_id']
         wordset = WordSet.objects.filter(pk=wordsetid).get()
         mode = Modes(mode = algo)
         mode.save()
         new_trial = Trial(wordset=wordset, mode=mode, user=request.user, score=0)
         new_trial.save()
+        pickle.dump(teacher, open("../Datasets/" + str(new_trial.id), "wb"))
+        request.session['trial_id'] = new_trial.id
     if num_shown < num_teaching_images:
         if request.method == 'POST':
             num_shown += 1
+            request.session['num_shown'] = num_shown
             return feedback(request, pk)
         else:  # get request
             return teaching(request, pk)
     elif num_shown - num_teaching_images < num_testing_images:
         if request.method == 'POST':
             num_shown += 1
+            request.session['num_shown'] = num_shown
             processTestingAnswer(request, pk)
         if num_shown - num_teaching_images < num_testing_images:
             return testing(request, pk)
         else:
             num_shown = 0
+            request.session['num_shown'] = num_shown
             return testResults(request)
 
 
 
-def getNext(n):
-    global teacher
-    return teacher.get_next_teach_sample()
+def getNext(request, n):
+    trial_id = request.session['trial_id']
+    teacher = pickle.load(open("../Datasets/" + str(trial_id), "rb"))
+    ans = teacher.get_next_teach_sample()
+    pickle.dump(teacher, open("../Datasets/" + str(trial_id), "wb"))
+    return ans
 
 
 def teaching(request, pk):
     """
     Shows a teaching example with options
     """
-    global num_shown
+    num_shown = request.session['num_shown']
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
-    next_sample = getNext(len(wordlist))
+    next_sample = getNext(request, len(wordlist))
     try:
         next_word = wordlist[next_sample]
     except TypeError:
@@ -152,7 +187,9 @@ def teaching(request, pk):
 
 
 def feedback(request, pk):
-    global teacher
+    trial_id = request.session['trial_id']
+    teacher = pickle.load(open("../Datasets/" + str(trial_id), "rb"))
+    num_shown = request.session['num_shown']
     answer_ = int(request.POST['answer'])
     next_sample = int(request.session['next_sample'])
     word_id = int(request.session['word_id'])
@@ -160,9 +197,12 @@ def feedback(request, pk):
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
+    print str(answer_)
+    print str(next_sample)
     teacher.teach_judge(answer_, next_sample)
+    pickle.dump(teacher, open("../Datasets/" + str(trial_id), "wb"))
     is_correct = answer_ == next_sample
-    curr_trial = Trial.objects.filter(user = request.user).filter(wordset=wordset).latest('time_started')
+    curr_trial = Trial.objects.filter(id = trial_id).get()
     new_question = Question(trial=curr_trial, question_num = num_shown, correct_word=word, correct = is_correct)
     new_question.save()
 
@@ -178,14 +218,18 @@ def testing(request, pk):
     """
     Shows a testing example with options
     """
-    global not_shown
+    num_shown = request.session['num_shown']
+    not_shown = request.session['not_shown']
     next_sample = request.session['next_sample']
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     wordlist = Word.objects.filter(wordset=wordset)
     while next_sample not in not_shown:
         next_sample = random.randint(0,9)
-    not_shown.remove(next_sample)
+        if len(not_shown) == 0:
+            break
+    if len(not_shown) != 0:
+        not_shown.remove(next_sample)
     next_word = wordlist[next_sample]
 
     context = {'next_word': next_word,
@@ -195,6 +239,7 @@ def testing(request, pk):
                }
     request.session['next_sample'] = next_sample
     request.session['word_id'] = next_word.id
+    request.session['not_shown'] = not_shown
     n = request.session['n']
     request.session['n'] = n + 1
 
@@ -204,10 +249,11 @@ def testResults(request):
     # Should show statistics of the quiz
     # Should have a link to try other quizes
     # Get the average score
+    trial_id = request.session['trial_id']
     wordsetid = request.session['wordset_id']
     wordset = WordSet.objects.filter(pk=wordsetid).get()
     score_sum = 0
-    curr_trial = Trial.objects.filter(user=request.user).filter(wordset=wordset).filter(time_finished=None).latest('time_started')
+    curr_trial = Trial.objects.filter(id = trial_id).get()
     score = len(Question.objects.filter(trial=curr_trial).filter(correct=True).filter(question_num__gt=num_teaching_images))
     time_finished = datetime.now()
     min_time = Trial.objects.all().aggregate(Min('time_started'))
@@ -239,6 +285,8 @@ def testResults(request):
 
 def processTestingAnswer(request, pk):
 
+    trial_id = request.session['trial_id']
+    num_shown = request.session['num_shown']
     answer_ = int(request.POST['answer'])
     next_sample = int(request.session['next_sample'])
     word_id = int(request.session['word_id'])
@@ -248,7 +296,7 @@ def processTestingAnswer(request, pk):
     wordlist = Word.objects.filter(wordset=wordset)
 
     is_correct = answer_ == next_sample
-    curr_trial = Trial.objects.filter(user = request.user).filter(wordset=wordset).latest('time_started')
+    curr_trial = Trial.objects.filter(id=trial_id).get()
     new_question = Question(trial=curr_trial, question_num = num_shown, correct_word=word, correct = is_correct)
     new_question.save()
 
