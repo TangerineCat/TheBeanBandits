@@ -5,6 +5,7 @@
 
 import random
 import Queue
+import math
 
 '''
 These are classes to teach the student to recognize character.
@@ -101,8 +102,6 @@ Improved-Wrong-Stay-Correct-Shift:
 keep teach the student every "revisit_period" rounds until he learns the
 character
 '''
-
-
 class IWSCS_Teach(Teach):
 
     def __init__(self, n_samples, teach_times, revisit_period):
@@ -144,6 +143,39 @@ class IWSCS_Teach(Teach):
                         self.prev_sample_index + 1) % self.n_samples
                 else:
                     self.revisit_queue.put(self.character_id)
+                    
+
+# Worst performance teaching strategy           
+class WP_Teach(Teach):
+    
+    def __init__(self, n_samples, teach_times):
+        Teach.__init__(self, n_samples, teach_times)
+        self.accuracy = [0.0 for _ in range(self.n_samples)]
+        self.counts = [0 for _ in range(self.n_samples)]
+        self.sample_index = 0
+        
+    def get_next_teach_sample(self):
+        print "round:", self.teach_process
+        print self.accuracy
+        
+        if not self.terminated():
+            self.teach_process += 1
+            minimum = min(self.accuracy)
+            indices = [x for x in range(self.n_samples) if self.accuracy[x] == minimum]
+            self.sample_index = random.choice(indices)
+            self.counts[self.sample_index] += 1
+            return self.sample_index
+            
+        else:
+            return (-1)
+            
+    def teach_judge(self, choice, groundtruth):
+        if not self.terminated():
+            n = self.counts[self.sample_index]
+            if choice == groundtruth:
+                self.accuracy[self.sample_index] = self.accuracy[self.sample_index] * (n-1) / n + 1.0 / n
+            else:
+                self.accuracy[self.sample_index] = self.accuracy[self.sample_index] * (n-1) / n
                     
                     
 # Multi-armed bandit teaching strategy
