@@ -89,7 +89,6 @@ def quiz(request, pk):
     request.session['wordset_id'] = pk
     if request.method != 'POST' and num_shown == 0:
         algo = random.randint(0,4)
-        algo = 4
         request.session['algo'] = algo
         if algo == RANDOM:
             print "RANDOM"
