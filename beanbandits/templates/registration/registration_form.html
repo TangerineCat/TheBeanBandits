@@ -1,4 +1,4 @@
-{% extends "registration/base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Sign up{% endblock %}
 
@@ -7,9 +7,17 @@
   {% if form.errors %}
   <p class="errors">Please correct the errors below: {{ form.non_field_errors }}</p>
   {% endif %}
+    <h1>Create an account</h1>
 
-  <h1>Create an account</h1>
-  
+<p>Fill out the form to the left (all fields are required), and your
+account will be created; you'll be sent an email with instructions on how
+to finish your registration.</p>
+
+<p>We'll only use your email to send you signup instructions. We hate spam
+as much as you do.</p>
+
+<p>This account will let you log into the ticket tracker, claim tickets,
+and be exempt from spam filtering.</p>
   <form method="post" action="" class="wide">
 	{% csrf_token %}
     <p>
@@ -18,6 +26,13 @@
         <p class="errors">{{ form.username.errors.as_text }}</p>
       {% endif %}
       {{ form.username }}
+    </p>
+    <p>
+      <label for="id_first_name">First Name:</label>
+      {% if form.first_name.errors %}
+        <p class="errors">{{ form.first_name.errors.as_text }}</p>
+      {% endif %}
+      {{ form.first_name }}
     </p>
     <p>
       <label for="id_email">Email address:</label>
@@ -40,20 +55,33 @@
       {% endif %}
       {{ form.password2 }}
     </p>
+    <br>
+    <h2>More Info about you!</h2>
+    <p>
+      <label for="gender">Gender:</label>
+      {% if form.gender.errors %}
+        <p class="errors">{{ form.gender.errors.as_text }}</p>
+      {% endif %}
+      {{ form.gender }}
+    </p>
+      <p>
+      <label for="gender">Age:</label>
+      {% if form.age.errors %}
+        <p class="errors">{{ form.age.errors.as_text }}</p>
+      {% endif %}
+      {{ form.age }}
+    </p>
+    <p>
+      <label for="gender">Chinese Proficiency:</label>
+      {% if form.password2.errors %}
+        <p class="errors">{{ form.proficiency.errors.as_text }}</p>
+      {% endif %}
+      {{ form.proficiency }}
+    </p>
     <p class="submit"><input type="submit" value="Register &rarr;"></p>
   </form>
-  <p>If you already have an account, <a href="/accounts/login/">login</a> instead. </p>
-  
+
+<p>If you already have an account, <a href="/accounts/login/">login</a> instead. </p>
+
 {% endblock %}
 
-{% block content-related %}
-<p>Fill out the form to the left (all fields are required), and your
-account will be created; you'll be sent an email with instructions on how
-to finish your registration.</p>
-
-<p>We'll only use your email to send you signup instructions. We hate spam
-as much as you do.</p>
-
-<p>This account will let you log into the ticket tracker, claim tickets,
-and be exempt from spam filtering.</p>
-{% endblock %}
