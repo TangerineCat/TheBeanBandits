@@ -258,7 +258,7 @@ def testResults(request):
     time_finished = datetime.now()
     min_time = Trial.objects.all().aggregate(Min('time_started'))
     curr_trial.time_finished = time_finished
-    finished_trials = Trial.objects.filter(wordset=wordset)
+    finished_trials = Trial.objects.filter(wordset=wordset).exclude(score=0)
     curr_trial.score = score
     curr_trial.save()
     print len(finished_trials)
