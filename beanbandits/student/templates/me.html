@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}Class selection{% endblock %}
+{% block main_content %}
+  <div class="me">
+    <div class="container">
+      <h2 style="font-weight:normal">Hi {% firstof user.first_name user.username "dude" %}</h2>
+
+
+    </div>
+  </div>
+{% endblock %}

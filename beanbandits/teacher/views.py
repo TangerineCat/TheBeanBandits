@@ -49,6 +49,8 @@ RESPONSE = 2
 ENDTEACH = 3
 TESTING = 4
 ENDTEST = 5
+
+
 RANDOM = 0
 WSCS = 1
 IWSCS = 2
@@ -113,7 +115,7 @@ def quiz(request, pk):
         else:
             num_shown = 0
             return testResults(request)
-        
+
 
 
 def getNext(n):
@@ -185,7 +187,7 @@ def testing(request, pk):
         next_sample = random.randint(0,9)
     not_shown.remove(next_sample)
     next_word = wordlist[next_sample]
-    
+
     context = {'next_word': next_word,
                'wordlist': wordlist,
                'testing_image_num': (num_shown - num_teaching_images + 1),
